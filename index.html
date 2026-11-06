@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>瞑想アプリ</title>
+  <title>瞑想の記録</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      /* 峰不二子をイメージさせるダークでセクシー、かつスタイリッシュな背景カラーとグラデーション */
-      background: linear-gradient(135deg, #1a1a1a 0%, #3a0007 50%, #111111 100%);
-      color: #f7fafc;
+      /* 峰不二子を想起させる魅惑的なダークレッド＆ブラックのグラデーション背景 */
+      background: linear-gradient(135deg, #121212 0%, #2b0b0e 50%, #1a1a1a 100%);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -18,30 +17,51 @@
       padding: 20px;
     }
     .card {
-      /* お写真のような落ち着いた上品なカードデザイン */
-      background: #fdfbf7;
+      /* お写真のような温かみのあるベージュトーンの上品なカード */
+      background: #f4efe6;
       color: #2d3748;
       width: 100%;
       max-width: 420px;
-      border-radius: 24px;
-      padding: 28px 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      border-radius: 28px;
+      padding: 30px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       text-align: center;
+      border: 1px solid rgba(214, 158, 46, 0.3);
     }
-    .date-bar {
-      font-size: 0.9rem;
+    .record-title {
+      font-size: 0.95rem;
       color: #718096;
-      margin-bottom: 8px;
-    }
-    .app-subtitle {
-      font-size: 0.85rem;
-      color: #e53e3e;
-      font-weight: bold;
       letter-spacing: 1px;
-      margin-bottom: 15px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #e2dcd0;
+      padding-bottom: 12px;
     }
-    h1 { font-size: 1.6rem; color: #1a202c; margin-bottom: 15px; }
-    
+    .date-info {
+      font-size: 0.95rem;
+      color: #4a5568;
+      margin-top: 12px;
+      font-weight: 500;
+    }
+    .total-time {
+      font-size: 3.2rem;
+      font-weight: bold;
+      color: #1a202c;
+      margin: 8px 0;
+      letter-spacing: -1px;
+    }
+    .course-title-sub {
+      font-size: 1rem;
+      color: #2d3748;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .today-sum {
+      font-size: 0.85rem;
+      color: #718096;
+      margin-bottom: 24px;
+    }
+
+    /* コース切替ボタン */
     .course-selector {
       display: flex;
       gap: 10px;
@@ -50,42 +70,20 @@
     .btn-course {
       flex: 1;
       padding: 10px;
-      border: 2px solid #e2e8f0;
+      border: 2px solid #d4c5b9;
       border-radius: 12px;
       background: #fff;
       color: #4a5568;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.2s;
     }
     .btn-course.active {
-      background: #e53e3e;
+      background: #dd6b20;
       color: #fff;
-      border-color: #e53e3e;
+      border-color: #dd6b20;
     }
 
-    /* 現在のステップ表示エリア */
-    .current-step-box {
-      background: #f7fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .step-label {
-      font-size: 0.9rem;
-      color: #e53e3e;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    .timer-display {
-      font-size: 3rem;
-      font-weight: bold;
-      color: #1a202c;
-      margin: 5px 0 10px;
-      font-variant-numeric: tabular-nums;
-    }
-
+    /* 操作ボタン */
     .control-btns {
       display: flex;
       gap: 10px;
@@ -103,89 +101,83 @@
     .btn-start { background: #d69e2e; color: #fff; }
     .btn-reset { background: #e53e3e; color: #fff; }
 
-    /* お写真のようなリスト表示部分 */
+    /* リスト部分（お写真のデザインを完全再現） */
     .steps-list {
       text-align: left;
-      border-top: 1px solid #e2e8f0;
-      padding-top: 15px;
-    }
-    .steps-list-title {
-      font-size: 0.85rem;
-      color: #a0aec0;
-      margin-bottom: 10px;
-      text-align: center;
+      border-top: 1px solid #e2dcd0;
+      padding-top: 16px;
     }
     .step-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #edf2f7;
-      font-size: 0.95rem;
+      padding: 12px 8px;
+      border-bottom: 1px solid #eae5dc;
+      font-size: 1rem;
+      color: #2d3748;
     }
     .step-item.active-row {
-      background: #fff5f5;
+      background: #eae3d5;
+      border-radius: 10px;
       font-weight: bold;
-      color: #e53e3e;
-      border-radius: 8px;
-      padding-left: 8px;
-      padding-right: 8px;
+      color: #9c4221;
     }
     .step-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .step-badge {
-      background: #ed8936;
+      background: #dd6b20;
       color: #fff;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       font-weight: bold;
+    }
+    .step-time-text {
+      font-weight: bold;
+      font-size: 1.05rem;
     }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <div class="date-bar" id="currentDate"></div>
-  <div class="app-subtitle">峰不二子 Style Meditation</div>
+  <div class="record-title">瞑想の記録</div>
+  <div class="date-info" id="currentDate">11月6日 (金) 昼</div>
 
-  <h1>瞑想アプリ</h1>
+  <!-- タイマー部分（大きく現在の時間を表示） -->
+  <div class="total-time" id="timeDisplay">01:00</div>
+  <div class="course-title-sub" id="stepName">第6チャクラ</div>
+  <div class="today-sum" id="statusMessage">スタートボタンを押してください</div>
 
+  <!-- コース切替 -->
   <div class="course-selector">
     <button class="btn-course active" onclick="selectCourse(9)">9分コース</button>
     <button class="btn-course" onclick="selectCourse(21)">21分コース</button>
   </div>
 
-  <div class="current-step-box">
-    <div class="step-label" id="stepName">第6チャクラ</div>
-    <div class="timer-display" id="timeDisplay">01:00</div>
-  </div>
-
+  <!-- スタート・リセット -->
   <div class="control-btns">
     <button class="btn-action btn-start" id="startBtn" onclick="toggleTimer()">スタート</button>
     <button class="btn-action btn-reset" onclick="resetTimer()">リセット</button>
   </div>
 
-  <div class="steps-list">
-    <div class="steps-list-title">コース構成</div>
-    <div id="stepsListContainer"></div>
-  </div>
+  <!-- ステップ一覧（お写真のリスト形式） -->
+  <div class="steps-list" id="stepsListContainer"></div>
 </div>
 
 <script>
-  // 低音シンキングボウル風ゴング音生成
+  // 低音シンキングボウル風ゴング音
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   function playSingingBowl() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
@@ -203,10 +195,7 @@
     osc.stop(audioCtx.currentTime + 4.5);
   }
 
-  function playSingleGong() {
-    playSingingBowl();
-  }
-
+  function playSingleGong() { playSingingBowl(); }
   function playTripleGong() {
     playSingingBowl();
     setTimeout(playSingingBowl, 1500);
@@ -239,7 +228,7 @@
 
   function init() {
     const now = new Date();
-    document.getElementById('currentDate').innerText = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
+    document.getElementById('currentDate').innerText = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }) + ' 昼';
     selectCourse(9);
   }
 
@@ -267,7 +256,7 @@
           <div class="step-badge">${idx + 1}</div>
           <span>${step.name}</span>
         </div>
-        <span>${step.minText}</span>
+        <span class="step-time-text">${step.minText}</span>
       `;
       container.appendChild(row);
     });
@@ -296,9 +285,11 @@
       clearInterval(timerId);
       isRunning = false;
       document.getElementById('startBtn').innerText = 'スタート';
+      document.getElementById('statusMessage').innerText = '一時停止中';
     } else {
       isRunning = true;
       document.getElementById('startBtn').innerText = '一時停止';
+      document.getElementById('statusMessage').innerText = '瞑想中...';
       timerId = setInterval(tick, 1000);
     }
   }
@@ -317,7 +308,8 @@
         isRunning = false;
         playTripleGong();
         document.getElementById('startBtn').innerText = 'スタート';
-        alert('すべての瞑想が完了しました');
+        document.getElementById('statusMessage').innerText = 'すべての瞑想が完了しました';
+        alert('瞑想が完了しました');
       }
     }
   }
@@ -326,6 +318,7 @@
     clearInterval(timerId);
     isRunning = false;
     document.getElementById('startBtn').innerText = 'スタート';
+    document.getElementById('statusMessage').innerText = 'リセットしました';
     loadStep(0);
   }
 
