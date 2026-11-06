@@ -49,6 +49,17 @@
       margin: 10px 0;
     }
 
+    /* タイマーの右上に配置 */
+    .fujiko-img {
+      position: absolute;
+      top: -30px;
+      right: 10px;
+      width: 85px;
+      height: auto;
+      z-index: 10;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -156,7 +167,8 @@
   <div class="date-info" id="currentDate"></div>
 
   <div class="timer-container">
-    <!-- 画像を完全に削除しました -->
+    <!-- アップロードされている「不二子.png」を読み込み -->
+    <img src="不二子.png" class="fujiko-img" alt="峰不二子">
     <div class="total-time" id="timeDisplay">01:00</div>
   </div>
 
