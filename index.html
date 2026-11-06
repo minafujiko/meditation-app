@@ -8,7 +8,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      /* 峰不二子を想起させる魅惑的なダークレッド＆ブラックのグラデーション背景 */
       background: linear-gradient(135deg, #121212 0%, #2b0b0e 50%, #1a1a1a 100%);
       display: flex;
       justify-content: center;
@@ -17,7 +16,6 @@
       padding: 20px;
     }
     .card {
-      /* お写真のような温かみのあるベージュトーンの上品なカード */
       background: #f4efe6;
       color: #2d3748;
       width: 100%;
@@ -27,6 +25,7 @@
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       text-align: center;
       border: 1px solid rgba(214, 158, 46, 0.3);
+      position: relative;
     }
     .record-title {
       font-size: 0.95rem;
@@ -42,11 +41,31 @@
       margin-top: 12px;
       font-weight: 500;
     }
+
+    /* タイマーと不二子ちゃん画像の配置調整エリア */
+    .timer-container {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      margin: 10px 0;
+    }
+
+    /* 峰不二子画像（タイマーの右上・21分ボタンの上に小さく配置） */
+    .fujiko-img {
+      position: absolute;
+      top: -10px;
+      right: 15px;
+      width: 65px;
+      height: auto;
+      z-index: 10;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+    }
+
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
       color: #1a202c;
-      margin: 8px 0;
+      margin: 0;
       letter-spacing: -1px;
     }
     .course-title-sub {
@@ -101,7 +120,7 @@
     .btn-start { background: #d69e2e; color: #fff; }
     .btn-reset { background: #e53e3e; color: #fff; }
 
-    /* リスト部分（お写真のデザインを完全再現） */
+    /* リスト部分 */
     .steps-list {
       text-align: left;
       border-top: 1px solid #e2dcd0;
@@ -151,8 +170,12 @@
   <div class="record-title">瞑想の記録</div>
   <div class="date-info" id="currentDate">11月6日 (金) 昼</div>
 
-  <!-- タイマー部分（大きく現在の時間を表示） -->
-  <div class="total-time" id="timeDisplay">01:00</div>
+  <div class="timer-container">
+    <!-- 峰不二子イラスト -->
+    <img src="fujiko.jpg" class="fujiko-img" alt="峰不二子">
+    <div class="total-time" id="timeDisplay">01:00</div>
+  </div>
+
   <div class="course-title-sub" id="stepName">第6チャクラ</div>
   <div class="today-sum" id="statusMessage">スタートボタンを押してください</div>
 
@@ -168,7 +191,7 @@
     <button class="btn-action btn-reset" onclick="resetTimer()">リセット</button>
   </div>
 
-  <!-- ステップ一覧（お写真のリスト形式） -->
+  <!-- ステップ一覧 -->
   <div class="steps-list" id="stepsListContainer"></div>
 </div>
 
@@ -202,7 +225,6 @@
     setTimeout(playSingingBowl, 3000);
   }
 
-  // ご指定の正確な構成
   const courses = {
     9: [
       { name: "第6チャクラ", duration: 60, minText: "1分" },
