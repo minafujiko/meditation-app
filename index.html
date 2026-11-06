@@ -36,17 +36,18 @@
       padding-bottom: 12px;
     }
     .date-info {
-      font-size: 0.95rem;
+      font-size: 1rem;
       color: #4a5568;
-      margin-top: 12px;
+      margin-top: 10px;
       font-weight: 500;
     }
+    /* ③ 何時から何時の表示を大きく・見やすく改善 */
     .session-time-log {
-      font-size: 0.85rem;
+      font-size: 1.15rem;
       color: #dd6b20;
-      font-weight: bold;
-      margin-top: 4px;
-      min-height: 1.2em;
+      font-weight: 800;
+      margin-top: 6px;
+      min-height: 1.4em;
     }
 
     .timer-container {
@@ -58,7 +59,7 @@
 
     .fujiko-img {
       position: absolute;
-      top: 40px;
+      top: 35px;
       right: -15px;
       width: 70px;
       height: auto;
@@ -66,6 +67,7 @@
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
     }
 
+    /* ② タイマーおよび完了後の見やすい大型表示 */
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -73,14 +75,20 @@
       margin: 0;
       letter-spacing: -1px;
     }
+    .completed-display {
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: #dd6b20;
+    }
+
     .course-title-sub {
-      font-size: 1rem;
+      font-size: 1.05rem;
       color: #2d3748;
       font-weight: bold;
       margin-bottom: 6px;
     }
     .today-sum {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       color: #718096;
       margin-bottom: 24px;
     }
@@ -197,7 +205,7 @@
 <script>
   let audioCtx = null;
 
-  // 音声エンジンの初期化・ロック解除
+  // ① スマホ環境で毎回収音を鳴らすための強いロック解除処理
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -209,22 +217,25 @@
 
   function playSingingBowl() {
     initAudio();
-    
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
-    
-    gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
-    
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    
-    osc.start();
-    osc.stop(audioCtx.currentTime + 4.5);
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
+      
+      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 4.5);
+    } catch(e) {
+      console.log('Audio error:', e);
+    }
   }
 
   function playSingleGong() { playSingingBowl(); }
@@ -321,6 +332,8 @@
     currentStepIdx = idx;
     stepSecondsLeft = steps[idx].duration;
     document.getElementById('stepName').innerText = steps[idx].name;
+    const timeElem = document.getElementById('timeDisplay');
+    timeElem.classList.remove('completed-display');
     updateDisplay();
     renderStepsList();
   }
@@ -332,7 +345,6 @@
   }
 
   function toggleTimer() {
-    // ボタンを押した瞬間に音のロックを確実に解除
     initAudio();
     
     if (isRunning) {
@@ -363,16 +375,23 @@
         playSingleGong();
         loadStep(currentStepIdx + 1);
       } else {
+        // 全ステップ完了処理
         clearInterval(timerId);
         isRunning = false;
         playTripleGong();
         
         const endTimeStr = getFormattedTime();
-        document.getElementById('timeLog').innerText = `開始：${startTimeStr} / 終了：${endTimeStr}`;
+        // ③ 時間ログを大きく表示
+        document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
         
+        // ② 終了後に「合計何分やったか」を大きく表示
+        const timeElem = document.getElementById('timeDisplay');
+        timeElem.innerText = `${currentCourseMinutes}分完了！`;
+        timeElem.classList.add('completed-display');
+        
+        document.getElementById('stepName').innerText = '全工程 完了';
         document.getElementById('startBtn').innerText = 'スタート';
-        document.getElementById('statusMessage').innerText = 'すべての瞑想が完了しました';
-        alert('瞑想が完了しました');
+        document.getElementById('statusMessage').innerText = 'お疲れ様でした。素晴らしい瞑想時間でした！';
       }
     }
   }
@@ -387,9 +406,9 @@
     loadStep(0);
   }
 
-  // 画面のどこかをタップしただけでも音の準備をするように設定
-  window.addEventListener('touchstart', initAudio, { once: true });
-  window.addEventListener('click', initAudio, { once: true });
+  // 画面タップ・タッチ時に音声制限を確実に解除
+  document.addEventListener('touchstart', initAudio, { passive: true });
+  document.addEventListener('click', initAudio, { passive: true });
 
   window.onload = init;
 </script>
