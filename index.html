@@ -41,13 +41,14 @@
       margin-top: 10px;
       font-weight: 500;
     }
-    /* ③ 何時から何時の表示を大きく・見やすく改善 */
+    /* ③ 何時から何時の表示を大きく・赤色に改善 */
     .session-time-log {
-      font-size: 1.15rem;
-      color: #dd6b20;
-      font-weight: 800;
-      margin-top: 6px;
-      min-height: 1.4em;
+      font-size: 1.3rem;
+      color: #e53e3e;
+      font-weight: 900;
+      margin-top: 8px;
+      min-height: 1.5em;
+      letter-spacing: 0.5px;
     }
 
     .timer-container {
@@ -67,7 +68,7 @@
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
     }
 
-    /* ② タイマーおよび完了後の見やすい大型表示 */
+    /* ② 終わったあともタイマー部分に大きく表示を維持するスタイル */
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -76,7 +77,7 @@
       letter-spacing: -1px;
     }
     .completed-display {
-      font-size: 2.8rem;
+      font-size: 2.6rem;
       font-weight: 900;
       color: #dd6b20;
     }
@@ -205,7 +206,7 @@
 <script>
   let audioCtx = null;
 
-  // ① スマホ環境で毎回収音を鳴らすための強いロック解除処理
+  // ① 音声が確実に鳴るための強力な初期化・再開処理
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -268,6 +269,7 @@
   let timerId = null;
   let isRunning = false;
   let startTimeStr = '';
+  let isFinished = false; // 完了状態を保持するフラグ
 
   function init() {
     const now = new Date();
@@ -303,6 +305,7 @@
       btn.classList.toggle('active', btn.innerText.includes(mins + '分'));
     });
     currentStepIdx = 0;
+    isFinished = false;
     loadStep(0);
     renderStepsList();
   }
@@ -314,7 +317,7 @@
     
     steps.forEach((step, idx) => {
       const row = document.createElement('div');
-      row.className = 'step-item' + (idx === currentStepIdx ? ' active-row' : '');
+      row.className = 'step-item' + (idx === currentStepIdx && !isFinished ? ' active-row' : '');
       row.innerHTML = `
         <div class="step-left">
           <div class="step-badge">${idx + 1}</div>
@@ -339,6 +342,7 @@
   }
 
   function updateDisplay() {
+    if (isFinished) return; // 完了時はタイマー数値を上書きしない
     const m = Math.floor(stepSecondsLeft / 60).toString().padStart(2, '0');
     const s = (stepSecondsLeft % 60).toString().padStart(2, '0');
     document.getElementById('timeDisplay').innerText = `${m}:${s}`;
@@ -353,6 +357,11 @@
       document.getElementById('startBtn').innerText = 'スタート';
       document.getElementById('statusMessage').innerText = '一時停止中';
     } else {
+      // もし既に完了していたら、スタートボタンで新規にやり直せるようにリセットする
+      if (isFinished) {
+        resetTimer();
+      }
+
       if (!startTimeStr) {
         startTimeStr = getFormattedTime();
         document.getElementById('timeLog').innerText = `開始：${startTimeStr}`;
@@ -378,20 +387,22 @@
         // 全ステップ完了処理
         clearInterval(timerId);
         isRunning = false;
+        isFinished = true; // 完了フラグを立てる
         playTripleGong();
         
         const endTimeStr = getFormattedTime();
-        // ③ 時間ログを大きく表示
+        // ③ 時間ログを大きく赤色で表示
         document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
         
-        // ② 終了後に「合計何分やったか」を大きく表示
+        // ② 終わったあともゼロにせず、完了した時間を大きく表示し続ける
         const timeElem = document.getElementById('timeDisplay');
-        timeElem.innerText = `${currentCourseMinutes}分完了！`;
+        timeElem.innerText = `${currentCourseMinutes}分完了`;
         timeElem.classList.add('completed-display');
         
         document.getElementById('stepName').innerText = '全工程 完了';
         document.getElementById('startBtn').innerText = 'スタート';
-        document.getElementById('statusMessage').innerText = 'お疲れ様でした。素晴らしい瞑想時間でした！';
+        document.getElementById('statusMessage').innerText = 'お疲れ様でした！素晴らしい瞑想でした。';
+        renderStepsList();
       }
     }
   }
@@ -399,10 +410,11 @@
   function resetTimer() {
     clearInterval(timerId);
     isRunning = false;
+    isFinished = false;
     startTimeStr = '';
     document.getElementById('timeLog').innerText = '';
     document.getElementById('startBtn').innerText = 'スタート';
-    document.getElementById('statusMessage').innerText = 'リセットしました';
+    document.getElementById('statusMessage').innerText = 'スタートボタンを押してください';
     loadStep(0);
   }
 
