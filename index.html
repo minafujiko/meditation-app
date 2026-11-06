@@ -49,12 +49,12 @@
       margin: 10px 0;
     }
 
-    /* タイマーの右上に配置 */
+    /* 画像を左斜め下に移動して数字と被らないように調整 */
     .fujiko-img {
       position: absolute;
-      top: -30px;
-      right: 10px;
-      width: 85px;
+      top: 15px;
+      left: 10px;
+      width: 75px;
       height: auto;
       z-index: 10;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
@@ -167,7 +167,6 @@
   <div class="date-info" id="currentDate"></div>
 
   <div class="timer-container">
-    <!-- アップロードされている「不二子.png」を読み込み -->
     <img src="不二子.png" class="fujiko-img" alt="峰不二子">
     <div class="total-time" id="timeDisplay">01:00</div>
   </div>
@@ -297,7 +296,7 @@
     
     if (isRunning) {
       clearInterval(timerId);
-      isRunning = false;
+      isRunning = andRunning = false;
       document.getElementById('startBtn').innerText = 'スタート';
       document.getElementById('statusMessage').innerText = '一時停止中';
     } else {
