@@ -8,7 +8,9 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f4f6f8;
+      /* 峰不二子をイメージさせるダークでセクシー、かつスタイリッシュな背景カラーとグラデーション */
+      background: linear-gradient(135deg, #1a1a1a 0%, #3a0007 50%, #111111 100%);
+      color: #f7fafc;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -16,20 +18,30 @@
       padding: 20px;
     }
     .card {
-      background: #ffffff;
+      /* お写真のような落ち着いた上品なカードデザイン */
+      background: #fdfbf7;
+      color: #2d3748;
       width: 100%;
-      max-width: 400px;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      max-width: 420px;
+      border-radius: 24px;
+      padding: 28px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
       text-align: center;
     }
     .date-bar {
       font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 20px;
+      color: #718096;
+      margin-bottom: 8px;
     }
-    h1 { font-size: 1.5rem; color: #2d3748; margin-bottom: 20px; }
+    .app-subtitle {
+      font-size: 0.85rem;
+      color: #e53e3e;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+    }
+    h1 { font-size: 1.6rem; color: #1a202c; margin-bottom: 15px; }
+    
     .course-selector {
       display: flex;
       gap: 10px;
@@ -37,32 +49,43 @@
     }
     .btn-course {
       flex: 1;
-      padding: 12px;
+      padding: 10px;
       border: 2px solid #e2e8f0;
       border-radius: 12px;
       background: #fff;
       color: #4a5568;
       font-weight: bold;
       cursor: pointer;
+      transition: all 0.2s;
     }
     .btn-course.active {
-      background: #3182ce;
+      background: #e53e3e;
       color: #fff;
-      border-color: #3182ce;
+      border-color: #e53e3e;
     }
-    .step-title {
-      font-size: 1.2rem;
+
+    /* 現在のステップ表示エリア */
+    .current-step-box {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .step-label {
+      font-size: 0.9rem;
+      color: #e53e3e;
       font-weight: bold;
-      color: #3182ce;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
     .timer-display {
-      font-size: 3.5rem;
+      font-size: 3rem;
       font-weight: bold;
-      color: #2d3748;
-      margin: 15px 0 25px;
+      color: #1a202c;
+      margin: 5px 0 10px;
       font-variant-numeric: tabular-nums;
     }
+
     .control-btns {
       display: flex;
       gap: 10px;
@@ -70,21 +93,68 @@
     }
     .btn-action {
       flex: 1;
-      padding: 14px;
+      padding: 12px;
       border: none;
       border-radius: 12px;
       font-weight: bold;
       font-size: 1rem;
       cursor: pointer;
     }
-    .btn-start { background: #eab308; color: #fff; }
-    .btn-reset { background: #f87171; color: #fff; }
+    .btn-start { background: #d69e2e; color: #fff; }
+    .btn-reset { background: #e53e3e; color: #fff; }
+
+    /* お写真のようなリスト表示部分 */
+    .steps-list {
+      text-align: left;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 15px;
+    }
+    .steps-list-title {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .step-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #edf2f7;
+      font-size: 0.95rem;
+    }
+    .step-item.active-row {
+      background: #fff5f5;
+      font-weight: bold;
+      color: #e53e3e;
+      border-radius: 8px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+    .step-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-badge {
+      background: #ed8936;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
 <div class="card">
   <div class="date-bar" id="currentDate"></div>
+  <div class="app-subtitle">峰不二子 Style Meditation</div>
 
   <h1>瞑想アプリ</h1>
 
@@ -93,17 +163,24 @@
     <button class="btn-course" onclick="selectCourse(21)">21分コース</button>
   </div>
 
-  <div class="step-title" id="stepName">ステップ: 第6チャクラ</div>
-  <div class="timer-display" id="timeDisplay">01:00</div>
+  <div class="current-step-box">
+    <div class="step-label" id="stepName">第6チャクラ</div>
+    <div class="timer-display" id="timeDisplay">01:00</div>
+  </div>
 
   <div class="control-btns">
     <button class="btn-action btn-start" id="startBtn" onclick="toggleTimer()">スタート</button>
     <button class="btn-action btn-reset" onclick="resetTimer()">リセット</button>
   </div>
+
+  <div class="steps-list">
+    <div class="steps-list-title">コース構成</div>
+    <div id="stepsListContainer"></div>
+  </div>
 </div>
 
 <script>
-  // Web Audio API による低音シンキングボウル風ゴング音生成
+  // 低音シンキングボウル風ゴング音生成
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   function playSingingBowl() {
@@ -112,11 +189,9 @@
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
-    // シンキングボウルらしい低めの周波数（146.8 Hz / D3付近）
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
+    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime); // D3
     
-    // 余韻をしっかり持たせる
     gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
     gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
@@ -128,33 +203,31 @@
     osc.stop(audioCtx.currentTime + 4.5);
   }
 
-  // ステップ切り替え時：ゴング1回
   function playSingleGong() {
     playSingingBowl();
   }
 
-  // 終了時：ゴング3連打
   function playTripleGong() {
     playSingingBowl();
     setTimeout(playSingingBowl, 1500);
     setTimeout(playSingingBowl, 3000);
   }
 
-  // ご指定の正確なコース構成
+  // ご指定の正確な構成
   const courses = {
     9: [
-      { name: "第6チャクラ", duration: 60 },   // 1分
-      { name: "第7チャクラ", duration: 60 },   // 1分
-      { name: "第1チャクラ", duration: 180 },  // 3分
-      { name: "ステージ",     duration: 180 },  // 3分
-      { name: "軟酥",         duration: 60 }    // 1分
+      { name: "第6チャクラ", duration: 60, minText: "1分" },
+      { name: "第7チャクラ", duration: 60, minText: "1分" },
+      { name: "第1チャクラ", duration: 180, minText: "3分" },
+      { name: "ステージ",     duration: 180, minText: "3分" },
+      { name: "軟酥",         duration: 60, minText: "1分" }
     ],
     21: [
-      { name: "第6チャクラ", duration: 180 },  // 3分
-      { name: "第7チャクラ", duration: 180 },  // 3分
-      { name: "第1チャクラ", duration: 360 },  // 6分
-      { name: "ステージ",     duration: 360 },  // 6分
-      { name: "軟酥",         duration: 180 }   // 3分
+      { name: "第6チャクラ", duration: 180, minText: "3分" },
+      { name: "第7チャクラ", duration: 180, minText: "3分" },
+      { name: "第1チャクラ", duration: 360, minText: "6分" },
+      { name: "ステージ",     duration: 360, minText: "6分" },
+      { name: "軟酥",         duration: 180, minText: "3分" }
     ]
   };
 
@@ -166,7 +239,7 @@
 
   function init() {
     const now = new Date();
-    document.getElementById('currentDate').innerText = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+    document.getElementById('currentDate').innerText = now.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
     selectCourse(9);
   }
 
@@ -178,6 +251,26 @@
     });
     currentStepIdx = 0;
     loadStep(0);
+    renderStepsList();
+  }
+
+  function renderStepsList() {
+    const container = document.getElementById('stepsListContainer');
+    const steps = courses[currentCourseMinutes];
+    container.innerHTML = '';
+    
+    steps.forEach((step, idx) => {
+      const row = document.createElement('div');
+      row.className = 'step-item' + (idx === currentStepIdx ? ' active-row' : '');
+      row.innerHTML = `
+        <div class="step-left">
+          <div class="step-badge">${idx + 1}</div>
+          <span>${step.name}</span>
+        </div>
+        <span>${step.minText}</span>
+      `;
+      container.appendChild(row);
+    });
   }
 
   function loadStep(idx) {
@@ -185,8 +278,9 @@
     if (idx >= steps.length) return;
     currentStepIdx = idx;
     stepSecondsLeft = steps[idx].duration;
-    document.getElementById('stepName').innerText = "ステップ: " + steps[idx].name;
+    document.getElementById('stepName').innerText = steps[idx].name;
     updateDisplay();
+    renderStepsList();
   }
 
   function updateDisplay() {
@@ -216,16 +310,14 @@
     } else {
       const steps = courses[currentCourseMinutes];
       if (currentStepIdx < steps.length - 1) {
-        // 次のステップへ切り替え（ゴング1回）
         playSingleGong();
         loadStep(currentStepIdx + 1);
       } else {
-        // 全ステップ完了（ゴング3連打）
         clearInterval(timerId);
         isRunning = false;
         playTripleGong();
         document.getElementById('startBtn').innerText = 'スタート';
-        alert('瞑想が完了しました');
+        alert('すべての瞑想が完了しました');
       }
     }
   }
