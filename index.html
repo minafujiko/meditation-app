@@ -49,15 +49,26 @@
       margin: 10px 0;
     }
 
-    /* ネット上の不二子ちゃんステッカー画像を直接指定 */
-    .fujiko-img {
+    /* タイマー横の不二子イラストアイコン */
+    .fujiko-icon {
       position: absolute;
-      top: -15px;
-      right: 10px;
-      width: 75px;
-      height: auto;
-      z-index: 10;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+      top: -5px;
+      right: 25px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      background-color: #ffe4e6;
+      border: 2px solid #e53e3e;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .fujiko-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .total-time {
@@ -167,8 +178,18 @@
   <div class="date-info" id="currentDate">11月6日 (金) 昼</div>
 
   <div class="timer-container">
-    <!-- Web上の不二子ちゃん画像を直接読み込み -->
-    <img src="https://images.fineartamerica.com/images/printedproducts/images/designimages/png/stickers/small/4426-sticker-mine-fujiko.png" class="fujiko-img" alt="峰不二子" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4333/4333609.png'">
+    <!-- SVGイラストをコード内に直接埋め込み（読み込み失敗ゼロ） -->
+    <div class="fujiko-icon">
+      <svg viewBox="0 0 100 100" width="100%" height="100%">
+        <circle cx="50" cy="50" r="50" fill="#f7fafc"/>
+        <!-- セクシー＆シックな不二子風シルエットイラスト -->
+        <path d="M50 15 C35 15 28 25 28 38 C28 50 35 55 35 65 C35 75 30 85 25 95 L75 95 C70 85 65 75 65 65 C65 55 72 50 72 38 C72 25 65 15 50 15 Z" fill="#2d3748"/>
+        <path d="M38 25 C30 35 25 50 35 60 C38 45 45 35 50 30 C45 28 40 26 38 25 Z" fill="#e53e3e"/>
+        <circle cx="43" cy="38" r="3" fill="#fff"/>
+        <circle cx="57" cy="38" r="3" fill="#fff"/>
+        <path d="M44 48 Q50 54 56 48" stroke="#e53e3e" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
     <div class="total-time" id="timeDisplay">01:00</div>
   </div>
 
