@@ -41,6 +41,14 @@
       margin-top: 12px;
       font-weight: 500;
     }
+    /* 開始・終了時刻を表示するスタイル */
+    .session-time-log {
+      font-size: 0.85rem;
+      color: #dd6b20;
+      font-weight: bold;
+      margin-top: 4px;
+      min-height: 1.2em;
+    }
 
     .timer-container {
       position: relative;
@@ -49,7 +57,6 @@
       margin: 10px 0 20px 0;
     }
 
-    /* 画像をさらに右側へ寄せて数字と一切被らないように微調整 */
     .fujiko-img {
       position: absolute;
       top: 40px;
@@ -165,6 +172,8 @@
 <div class="card">
   <div class="record-title">瞑想の記録</div>
   <div class="date-info" id="currentDate"></div>
+  <!-- 開始・終了時刻を表示する場所 -->
+  <div class="session-time-log" id="timeLog"></div>
 
   <div class="timer-container">
     <div class="total-time" id="timeDisplay">01:00</div>
@@ -238,11 +247,33 @@
   let stepSecondsLeft = 0;
   let timerId = null;
   let isRunning = false;
+  let startTimeStr = '';
 
   function init() {
     const now = new Date();
-    document.getElementById('currentDate').innerText = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' }) + ' 昼';
+    const hour = now.getHours();
+    
+    let timeOfDay = '昼';
+    if (hour >= 4 && hour < 11) {
+      timeOfDay = '朝';
+    } else if (hour >= 11 && hour < 16) {
+      timeOfDay = '昼';
+    } else if (hour >= 16 && hour < 19) {
+      timeOfDay = '夕';
+    } else {
+      timeOfDay = '夜';
+    }
+
+    const dateStr = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+    document.getElementById('currentDate').innerText = `${dateStr} ${timeOfDay}`;
     selectCourse(9);
+  }
+
+  function getFormattedTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
   }
 
   function selectCourse(mins) {
@@ -300,6 +331,12 @@
       document.getElementById('startBtn').innerText = 'スタート';
       document.getElementById('statusMessage').innerText = '一時停止中';
     } else {
+      // 最初のスタート時だけ開始時刻を記録
+      if (!startTimeStr) {
+        startTimeStr = getFormattedTime();
+        document.getElementById('timeLog').innerText = `開始：${startTimeStr}`;
+      }
+      
       isRunning = true;
       document.getElementById('startBtn').innerText = '一時停止';
       document.getElementById('statusMessage').innerText = '瞑想中...';
@@ -320,6 +357,11 @@
         clearInterval(timerId);
         isRunning = false;
         playTripleGong();
+        
+        // 終了時刻を記録して表示
+        const endTimeStr = getFormattedTime();
+        document.getElementById('timeLog').innerText = `開始：${startTimeStr} / 終了：${endTimeStr}`;
+        
         document.getElementById('startBtn').innerText = 'スタート';
         document.getElementById('statusMessage').innerText = 'すべての瞑想が完了しました';
         alert('瞑想が完了しました');
@@ -330,6 +372,8 @@
   function resetTimer() {
     clearInterval(timerId);
     isRunning = false;
+    startTimeStr = '';
+    document.getElementById('timeLog').innerText = '';
     document.getElementById('startBtn').innerText = 'スタート';
     document.getElementById('statusMessage').innerText = 'リセットしました';
     loadStep(0);
