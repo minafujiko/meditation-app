@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>瞑想アプリ</title>
+    <style>
+        :root {
+            --bg-color: #f7f9fc;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --primary-color: #4a90e2;
+            --secondary-color: #50e3c2;
+            --accent-color: #ff6b6b;
+            --border-color: #e1e8ed;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --accent-color: #cf6679;
+            --border-color: #2c2c2c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .datetime {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .theme-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .course-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .course-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: none;
+            color: var(--text-color);
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .course-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .step-indicator {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer-display {
+            font-size: 3.5rem;
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .start-btn { background-color: var(--secondary-color); color: #000; }
+        .pause-btn { background-color: #f1c40f; color: #000; }
+        .reset-btn { background-color: var(--accent-color); color: #fff; }
+
+        .history-section {
+            margin-top: 30px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .history-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .history-list li {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="datetime" id="datetime">2026/11/06 10:20</div>
+            <button class="theme-btn" onclick="toggleTheme()">切り替え</button>
+        </div>
+
+        <h1>瞑想アプリ</h1>
+
+        <div class="course-select">
+            <button class="course-btn active" id="btn-9" onclick="setCourse(9)">9分コース</button>
+            <button class="course-btn course-btn-21" id="btn-21" onclick="setCourse(21)">21分コース</button>
+        </div>
+
+        <div class="step-indicator" id="step-indicator">ステップ: 第6チャクラ</div>
+        <div class="timer-display" id="timer">09:00</div>
+
+        <div class="controls">
+            <button class="action-btn start-btn" id="start-pause-btn" onclick="toggleTimer()">スタート</button>
+            <button class="action-btn reset-btn" onclick="resetTimer()">リセット</button>
+        </div>
+
+        <div class="history-section">
+            <h2>瞑想の記録</h2>
+            <ul class="history-list" id="history-list">
+                <!-- 記録がここに追加されます -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // --- 音声生成（Web Audio API） ---
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // ゴング音（ステップ切り替え用）
+        function playGong() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3.0);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 3.0);
+        }
+
+        // シンギングボウル音（完了時）
+        function playSingingBowl() {
+            initAudio();
+            const now = audioCtx.currentTime;
+            const freqs = [216, 432, 648]; // 倍音構成
+            freqs.forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, now);
+                gain.gain.setValueAtTime(i === 0 ? 0.4 : 0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 6.0);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(now + 6.0);
+            });
+        }
+
+        // --- アプリのロジック ---
+        let totalTime = 9 * 60; // 秒
+        let currentTime = totalTime;
+        let timerId = null;
+        let isRunning = false;
+        let currentCourseMinutes = 9;
+
+        // 5つのステップ（「浸透」を「軟酥」に変更済み）
+        const steps9 = [
+            { name: "第6チャクラ", duration: 108 },
+            { name: "第7チャクラ", duration: 108 },
+            { name: "第1チャクラ", duration: 108 },
+            { name: "ステージ", duration: 108 },
+            { name: "軟酥", duration: 108 }
+        ];
+
+        const steps21 = [
+            { name: "第6チャクラ", duration: 252 },
+            { name: "第7チャクラ", duration: 252 },
+            { name: "第1チャクラ", duration: 252 },
+            { name: "ステージ", duration: 252 },
+            { name: "軟酥", duration: 252 }
+        ];
+
+        let currentSteps = steps9;
+
+        // 日時リアルタイム表示
+        function updateDateTime() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('datetime').innerText = `${y}/${m}/${d} ${h}:${min}`;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        function setCourse(mins) {
+            if (isRunning) return;
+            currentCourseMinutes = mins;
+            totalTime = mins * 60;
+            currentTime = totalTime;
+            currentSteps = (mins === 9) ? steps9 : steps21;
+
+            document.getElementById('btn-9').classList.toggle('active', mins === 9);
+            document.getElementById('btn-21').classList.toggle('active', mins === 21);
+
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const mins = Math.floor(currentTime / 60);
+            const secs = currentTime % 60;
+            document.getElementById('timer').innerText = 
+                String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+
+            // 現在のステップを計算
+            let elapsed = totalTime - currentTime;
+            let accumulated = 0;
+            let currentStepName = currentSteps[currentSteps.length - 1].name;
+
+            for (let s of currentSteps) {
+                accumulated += s.duration;
+                if (elapsed < accumulated) {
+                    currentStepName = s.name;
+                    break;
+                }
+            }
+            document.getElementById('step-indicator').innerText = `ステップ: ${currentStepName}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('start-pause-btn');
+            if (!isRunning) {
+                initAudio();
+                isRunning = true;
+                btn.innerText = "一時停止";
+                btn.className = "action-btn pause-btn";
+                
+                timerId = setInterval(() => {
+                    if (currentTime > 0) {
+                        // ステップが変わるタイミングでゴング音
+                        let elapsed = totalTime - currentTime;
+                        if (elapsed > 0) {
+                            let acc = 0;
+                            for (let s of currentSteps) {
+                                acc += s.duration;
+                                if (elapsed === acc) {
+                                    playGong();
+                                    break;
+                                }
+                            }
+                        }
+
+                        currentTime--;
+                        updateDisplay();
+                    } else {
+                        // 完了
+                        clearInterval(timerId);
+                        isRunning = false;
+                        playSingingBowl();
+                        btn.innerText = "スタート";
+                        btn.className = "action-btn start-btn";
+                        saveHistory();
+                    }
+                }, 1000);
+            } else {
+                clearInterval(timerId);
+                isRunning = false;
+                btn.innerText = "スタート";
+                btn.className = "action-btn start-btn";
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            isRunning = false;
+            currentTime = totalTime;
+            const btn = document.getElementById('start-pause-btn');
+            btn.innerText = "スタート";
+            btn.className = "action-btn start-btn";
+            updateDisplay();
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // ローカルストレージに保存
+        function saveHistory() {
+            const now = new Date();
+            const dateStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const record = { date: dateStr, course: `${currentCourseMinutes}分コース` };
+
+            let history = JSON.parse(localStorage.getItem('meditation_history') || '[]');
+            history.unshift(record);
+            if (history.max > 10) history.pop();
+            localStorage.setItem('meditation_history', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            let history = JSON.parse(localStorage.getItem('meditation_history') || '[]');
+            if (history.length === 0) {
+                list.innerHTML = '<li>まだ記録はありません</li>';
+                return;
+            }
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${item.date}</span><span>${item.course} 完了</span>`;
+                list.appendChild(li);
+            });
+        }
+
+        loadHistory();
+        updateDisplay();
+    </script>
+</body>
+</html>
