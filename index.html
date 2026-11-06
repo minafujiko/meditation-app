@@ -35,11 +35,12 @@
       border-bottom: 1px solid #e2dcd0;
       padding-bottom: 12px;
     }
+    /* ② 日にちの表示をもっと大きく改善 */
     .date-info {
-      font-size: 1rem;
-      color: #4a5568;
+      font-size: 1.35rem;
+      color: #2d3748;
       margin-top: 10px;
-      font-weight: 500;
+      font-weight: 700;
     }
     /* 時間の表示（大きく・赤色・太字） */
     .session-time-log {
@@ -90,13 +91,13 @@
     .today-sum {
       font-size: 0.9rem;
       color: #718096;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .course-selector {
       display: flex;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .btn-course {
       flex: 1;
@@ -114,18 +115,19 @@
       border-color: #dd6b20;
     }
 
+    /* ③ 一時停止とリセットボタンを小さくスリムに改善 */
     .control-btns {
       display: flex;
       gap: 10px;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
+      justify-content: center;
     }
     .btn-action {
-      flex: 1;
-      padding: 12px;
+      padding: 8px 20px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       font-weight: bold;
-      font-size: 1rem;
+      font-size: 0.9rem;
       cursor: pointer;
     }
     .btn-start { background: #d69e2e; color: #fff; }
@@ -205,50 +207,50 @@
 <script>
   let audioCtx = null;
 
-  function unlockAudio() {
-    try {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    } catch(e) {}
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    return audioCtx;
   }
 
-  function playSingingBowl() {
-    unlockAudio();
-    if (!audioCtx) return;
-
+  function playGongSound() {
     try {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
+      const ctx = getAudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
       
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(146.83, ctx.currentTime);
       
-      gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.9, audioCtx.currentTime + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 5.0);
+      gain.gain.setValueAtTime(0.0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 5.0);
       
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(ctx.destination);
       
       osc.start();
-      osc.stop(audioCtx.currentTime + 5.0);
+      osc.stop(ctx.currentTime + 5.0);
     } catch(e) {
-      console.log('Sound error:', e);
+      console.log('Audio error:', e);
     }
   }
 
-  function playSingleGong() { 
-    playSingingBowl(); 
+  // 各ステップの間（1回）
+  function playSingleGong() {
+    playGongSound();
   }
 
+  // 最後の完了時（3回連続）
   function playTripleGong() {
-    playSingingBowl();
-    setTimeout(() => playSingingBowl(), 1500);
-    setTimeout(() => playSingingBowl(), 3000);
+    playGongSound();
+    setTimeout(() => playGongSound(), 1500);
+    setTimeout(() => playGongSound(), 3000);
   }
 
   const courses = {
@@ -354,7 +356,7 @@
   }
 
   function toggleTimer() {
-    unlockAudio();
+    getAudioContext();
 
     if (isRunning) {
       clearInterval(timerId);
@@ -385,9 +387,9 @@
     } else {
       const steps = courses[currentCourseMinutes];
       
-      // まだ次のステップがある場合（第6、第7、第1、ステージの終わり）
+      // まだ次のステップがある場合
       if (currentStepIdx < steps.length - 1) {
-        playSingleGong(); // 切り替えのゴング（1回）
+        playSingleGong(); // 切り替えゴング（1回）
         
         currentStepIdx++;
         stepSecondsLeft = steps[currentStepIdx].duration;
@@ -395,14 +397,8 @@
         updateDisplay();
         renderStepsList();
       } else {
-        // ★ 最後のステップ「軟酥」が終わった瞬間
-        // ① まず軟酥が終わった合図のゴングを1回鳴らす
-        playSingleGong();
-        
-        // ② 少し遅れて（約1秒後）完了の3回ゴングを鳴らすことで、すべての間と最後をカバーします
-        setTimeout(() => {
-          playTripleGong();
-        }, 1200);
+        // 最後のステップ「軟酥」が終わったとき（全体完了）
+        playTripleGong(); // 完了ゴング（3回）
 
         clearInterval(timerId);
         isRunning = false;
@@ -434,8 +430,8 @@
     loadStep(0);
   }
 
-  document.addEventListener('touchstart', unlockAudio, { passive: true });
-  document.addEventListener('click', unlockAudio, { passive: true });
+  document.addEventListener('touchstart', () => getAudioContext(), { passive: true });
+  document.addEventListener('click', () => getAudioContext(), { passive: true });
 
   window.onload = init;
 </script>
