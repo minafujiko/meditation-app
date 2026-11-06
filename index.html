@@ -41,7 +41,7 @@
       margin-top: 10px;
       font-weight: 500;
     }
-    /* 何時から何時の表示（大きく・赤色・太字） */
+    /* 時間の表示（大きく・赤色・太字） */
     .session-time-log {
       font-size: 1.3rem;
       color: #e53e3e;
@@ -68,7 +68,6 @@
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
     }
 
-    /* 終わったあともタイマー部分に大きく表示を維持するスタイル */
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -206,8 +205,7 @@
 <script>
   let audioCtx = null;
 
-  // 音声エンジンの強制起動・再開（スマホ対策）
-  function initAudio() {
+  function unlockAudio() {
     try {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -215,14 +213,11 @@
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
-    } catch(e) {
-      console.log('Audio init error:', e);
-    }
+    } catch(e) {}
   }
 
-  // シンギングボウル（ゴング）の音を鳴らす関数
   function playSingingBowl() {
-    initAudio();
+    unlockAudio();
     if (!audioCtx) return;
 
     try {
@@ -230,11 +225,10 @@
       const gain = audioCtx.createGain();
       
       osc.type = 'sine';
-      // 瞑想に適した澄んだ鐘の周波数
       osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
       
       gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.04);
+      gain.gain.linearRampToValueAtTime(0.9, audioCtx.currentTime + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 5.0);
       
       osc.connect(gain);
@@ -243,7 +237,7 @@
       osc.start();
       osc.stop(audioCtx.currentTime + 5.0);
     } catch(e) {
-      console.log('Sound play error:', e);
+      console.log('Sound error:', e);
     }
   }
 
@@ -257,7 +251,6 @@
     setTimeout(() => playSingingBowl(), 3000);
   }
 
-  // ご指示いただいた正確な時間設定（9分コース / 21分コース）
   const courses = {
     9: [
       { name: "第6チャクラ", duration: 60,  minText: "1分" },
@@ -361,9 +354,7 @@
   }
 
   function toggleTimer() {
-    // スタートボタンを押した瞬間に音の許可を強制取得
-    initAudio();
-    // 確実に出すためにテスト音を小音量で裏で通すことも可能ですが、まずは許可を確実に通します
+    unlockAudio();
 
     if (isRunning) {
       clearInterval(timerId);
@@ -392,18 +383,30 @@
       stepSecondsLeft--;
       updateDisplay();
     } else {
-      // タイムアップ時の処理
       const steps = courses[currentCourseMinutes];
+      
+      // まだ次のステップがある場合（第6、第7、第1、ステージの終わり）
       if (currentStepIdx < steps.length - 1) {
-        // 途中のステップが終わったらゴングを鳴らす
-        playSingleGong();
-        loadStep(currentStepIdx + 1);
+        playSingleGong(); // 切り替えのゴング（1回）
+        
+        currentStepIdx++;
+        stepSecondsLeft = steps[currentStepIdx].duration;
+        document.getElementById('stepName').innerText = steps[currentStepIdx].name;
+        updateDisplay();
+        renderStepsList();
       } else {
-        // 全工程完了
+        // ★ 最後のステップ「軟酥」が終わった瞬間
+        // ① まず軟酥が終わった合図のゴングを1回鳴らす
+        playSingleGong();
+        
+        // ② 少し遅れて（約1秒後）完了の3回ゴングを鳴らすことで、すべての間と最後をカバーします
+        setTimeout(() => {
+          playTripleGong();
+        }, 1200);
+
         clearInterval(timerId);
         isRunning = false;
         isFinished = true;
-        playTripleGong(); // 完了時の3回ゴング
         
         const endTimeStr = getFormattedTime();
         document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
@@ -431,9 +434,8 @@
     loadStep(0);
   }
 
-  // 画面のどこをタッチしても音声制限を解除
-  document.addEventListener('touchstart', initAudio, { passive: true });
-  document.addEventListener('click', initAudio, { passive: true });
+  document.addEventListener('touchstart', unlockAudio, { passive: true });
+  document.addEventListener('click', unlockAudio, { passive: true });
 
   window.onload = init;
 </script>
