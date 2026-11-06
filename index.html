@@ -41,7 +41,7 @@
       margin-top: 10px;
       font-weight: 500;
     }
-    /* ③ 何時から何時の表示を大きく・赤色に改善 */
+    /* 何時から何時の表示（大きく・赤色・太字） */
     .session-time-log {
       font-size: 1.3rem;
       color: #e53e3e;
@@ -68,7 +68,7 @@
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
     }
 
-    /* ② 終わったあともタイマー部分に大きく表示を維持するスタイル */
+    /* 終わったあともタイマー部分に大きく表示を維持するスタイル */
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -206,53 +206,65 @@
 <script>
   let audioCtx = null;
 
-  // ① 音声が確実に鳴るための強力な初期化・再開処理
+  // 音声エンジンの強制起動・再開（スマホ対策）
   function initAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch(e) {
+      console.log('Audio init error:', e);
     }
   }
 
+  // シンギングボウル（ゴング）の音を鳴らす関数
   function playSingingBowl() {
     initAudio();
+    if (!audioCtx) return;
+
     try {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       
       osc.type = 'sine';
+      // 瞑想に適した澄んだ鐘の周波数
       osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
       
       gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.8, audioCtx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
+      gain.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 5.0);
       
       osc.connect(gain);
       gain.connect(audioCtx.destination);
       
       osc.start();
-      osc.stop(audioCtx.currentTime + 4.5);
+      osc.stop(audioCtx.currentTime + 5.0);
     } catch(e) {
-      console.log('Audio error:', e);
+      console.log('Sound play error:', e);
     }
   }
 
-  function playSingleGong() { playSingingBowl(); }
-  function playTripleGong() {
-    playSingingBowl();
-    setTimeout(playSingingBowl, 1500);
-    setTimeout(playSingingBowl, 3000);
+  function playSingleGong() { 
+    playSingingBowl(); 
   }
 
+  function playTripleGong() {
+    playSingingBowl();
+    setTimeout(() => playSingingBowl(), 1500);
+    setTimeout(() => playSingingBowl(), 3000);
+  }
+
+  // ご指示いただいた正確な時間設定（9分コース / 21分コース）
   const courses = {
     9: [
-      { name: "第6チャクラ", duration: 60, minText: "1分" },
-      { name: "第7チャクラ", duration: 60, minText: "1分" },
+      { name: "第6チャクラ", duration: 60,  minText: "1分" },
+      { name: "第7チャクラ", duration: 60,  minText: "1分" },
       { name: "第1チャクラ", duration: 180, minText: "3分" },
       { name: "ステージ",     duration: 180, minText: "3分" },
-      { name: "軟酥",         duration: 60, minText: "1分" }
+      { name: "軟酥",         duration: 60,  minText: "1分" }
     ],
     21: [
       { name: "第6チャクラ", duration: 180, minText: "3分" },
@@ -269,7 +281,7 @@
   let timerId = null;
   let isRunning = false;
   let startTimeStr = '';
-  let isFinished = false; // 完了状態を保持するフラグ
+  let isFinished = false;
 
   function init() {
     const now = new Date();
@@ -342,22 +354,23 @@
   }
 
   function updateDisplay() {
-    if (isFinished) return; // 完了時はタイマー数値を上書きしない
+    if (isFinished) return;
     const m = Math.floor(stepSecondsLeft / 60).toString().padStart(2, '0');
     const s = (stepSecondsLeft % 60).toString().padStart(2, '0');
     document.getElementById('timeDisplay').innerText = `${m}:${s}`;
   }
 
   function toggleTimer() {
+    // スタートボタンを押した瞬間に音の許可を強制取得
     initAudio();
-    
+    // 確実に出すためにテスト音を小音量で裏で通すことも可能ですが、まずは許可を確実に通します
+
     if (isRunning) {
       clearInterval(timerId);
       isRunning = false;
       document.getElementById('startBtn').innerText = 'スタート';
       document.getElementById('statusMessage').innerText = '一時停止中';
     } else {
-      // もし既に完了していたら、スタートボタンで新規にやり直せるようにリセットする
       if (isFinished) {
         resetTimer();
       }
@@ -379,29 +392,29 @@
       stepSecondsLeft--;
       updateDisplay();
     } else {
+      // タイムアップ時の処理
       const steps = courses[currentCourseMinutes];
       if (currentStepIdx < steps.length - 1) {
+        // 途中のステップが終わったらゴングを鳴らす
         playSingleGong();
         loadStep(currentStepIdx + 1);
       } else {
-        // 全ステップ完了処理
+        // 全工程完了
         clearInterval(timerId);
         isRunning = false;
-        isFinished = true; // 完了フラグを立てる
-        playTripleGong();
+        isFinished = true;
+        playTripleGong(); // 完了時の3回ゴング
         
         const endTimeStr = getFormattedTime();
-        // ③ 時間ログを大きく赤色で表示
         document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
         
-        // ② 終わったあともゼロにせず、完了した時間を大きく表示し続ける
         const timeElem = document.getElementById('timeDisplay');
         timeElem.innerText = `${currentCourseMinutes}分完了`;
         timeElem.classList.add('completed-display');
         
         document.getElementById('stepName').innerText = '全工程 完了';
         document.getElementById('startBtn').innerText = 'スタート';
-        document.getElementById('statusMessage').innerText = 'お疲れ様でした！素晴らしい瞑想でした。';
+        document.getElementById('statusMessage').innerText = 'お疲れ様でした！';
         renderStepsList();
       }
     }
@@ -418,7 +431,7 @@
     loadStep(0);
   }
 
-  // 画面タップ・タッチ時に音声制限を確実に解除
+  // 画面のどこをタッチしても音声制限を解除
   document.addEventListener('touchstart', initAudio, { passive: true });
   document.addEventListener('click', initAudio, { passive: true });
 
