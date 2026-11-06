@@ -49,17 +49,6 @@
       margin: 10px 0;
     }
 
-    /* タイマーの右上（21分コースの上付近）に小さく配置 */
-    .fujiko-img {
-      position: absolute;
-      top: -15px;
-      right: 15px;
-      width: 65px;
-      height: auto;
-      z-index: 10;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-    }
-
     .total-time {
       font-size: 3.2rem;
       font-weight: bold;
@@ -167,8 +156,7 @@
   <div class="date-info" id="currentDate"></div>
 
   <div class="timer-container">
-    <!-- 画像自体をデータ化して直接埋め込み -->
-    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'><g fill='none' fill-rule='evenodd'><path fill='%23E91E63' d='M30 65c5-15 20-25 40-20 15 4 25 15 25 30 0 20-15 35-35 35H35c-10 0-15-5-15-15 0-10 5-20 10-30z'/><circle cx='55' cy='30' r='18' fill='%23FFCC80'/><path fill='%233F51B5' d='M40 15c10-10 30-10 35 5 2 7-2 15-8 15s-12-8-12-8-5 8-15 3z'/><path fill='%23E91E63' d='M15 65l25-20M20 80l20-15' stroke='%23FFCC80' stroke-width='4' stroke-linecap='round'/></g></svg>" class="fujiko-img" alt="峰不二子">
+    <!-- 画像を完全に削除しました -->
     <div class="total-time" id="timeDisplay">01:00</div>
   </div>
 
