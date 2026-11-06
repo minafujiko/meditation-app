@@ -56,7 +56,6 @@
       margin: 10px 0 20px 0;
     }
 
-    /* 不二子ちゃんの位置（右斜め下、数字とかぶらない位置） */
     .fujiko-img {
       position: absolute;
       top: 40px;
@@ -196,10 +195,21 @@
 </div>
 
 <script>
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  let audioCtx = null;
+
+  // 音声エンジンの初期化・ロック解除
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
 
   function playSingingBowl() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    initAudio();
+    
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
@@ -322,7 +332,8 @@
   }
 
   function toggleTimer() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    // ボタンを押した瞬間に音のロックを確実に解除
+    initAudio();
     
     if (isRunning) {
       clearInterval(timerId);
@@ -375,6 +386,10 @@
     document.getElementById('statusMessage').innerText = 'リセットしました';
     loadStep(0);
   }
+
+  // 画面のどこかをタップしただけでも音の準備をするように設定
+  window.addEventListener('touchstart', initAudio, { once: true });
+  window.addEventListener('click', initAudio, { once: true });
 
   window.onload = init;
 </script>
