@@ -42,7 +42,6 @@
       font-weight: 500;
     }
 
-    /* タイマーと不二子ちゃん画像の配置調整エリア */
     .timer-container {
       position: relative;
       display: inline-block;
@@ -50,12 +49,12 @@
       margin: 10px 0;
     }
 
-    /* 峰不二子画像（タイマーの右上・21分ボタンの上に小さく配置） */
+    /* ネット上の不二子ちゃんステッカー画像を直接指定 */
     .fujiko-img {
       position: absolute;
-      top: -10px;
-      right: 15px;
-      width: 65px;
+      top: -15px;
+      right: 10px;
+      width: 75px;
       height: auto;
       z-index: 10;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
@@ -80,7 +79,6 @@
       margin-bottom: 24px;
     }
 
-    /* コース切替ボタン */
     .course-selector {
       display: flex;
       gap: 10px;
@@ -102,7 +100,6 @@
       border-color: #dd6b20;
     }
 
-    /* 操作ボタン */
     .control-btns {
       display: flex;
       gap: 10px;
@@ -120,7 +117,6 @@
     .btn-start { background: #d69e2e; color: #fff; }
     .btn-reset { background: #e53e3e; color: #fff; }
 
-    /* リスト部分 */
     .steps-list {
       text-align: left;
       border-top: 1px solid #e2dcd0;
@@ -171,32 +167,28 @@
   <div class="date-info" id="currentDate">11月6日 (金) 昼</div>
 
   <div class="timer-container">
-    <!-- 峰不二子イラスト -->
-    <img src="fujiko.jpg" class="fujiko-img" alt="峰不二子">
+    <!-- Web上の不二子ちゃん画像を直接読み込み -->
+    <img src="https://images.fineartamerica.com/images/printedproducts/images/designimages/png/stickers/small/4426-sticker-mine-fujiko.png" class="fujiko-img" alt="峰不二子" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4333/4333609.png'">
     <div class="total-time" id="timeDisplay">01:00</div>
   </div>
 
   <div class="course-title-sub" id="stepName">第6チャクラ</div>
   <div class="today-sum" id="statusMessage">スタートボタンを押してください</div>
 
-  <!-- コース切替 -->
   <div class="course-selector">
     <button class="btn-course active" onclick="selectCourse(9)">9分コース</button>
     <button class="btn-course" onclick="selectCourse(21)">21分コース</button>
   </div>
 
-  <!-- スタート・リセット -->
   <div class="control-btns">
     <button class="btn-action btn-start" id="startBtn" onclick="toggleTimer()">スタート</button>
     <button class="btn-action btn-reset" onclick="resetTimer()">リセット</button>
   </div>
 
-  <!-- ステップ一覧 -->
   <div class="steps-list" id="stepsListContainer"></div>
 </div>
 
 <script>
-  // 低音シンキングボウル風ゴング音
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   function playSingingBowl() {
@@ -205,7 +197,7 @@
     const gain = audioCtx.createGain();
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime); // D3
+    osc.frequency.setValueAtTime(146.83, audioCtx.currentTime);
     
     gain.gain.setValueAtTime(0.0, audioCtx.currentTime);
     gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.05);
