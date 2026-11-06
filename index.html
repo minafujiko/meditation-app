@@ -31,23 +31,25 @@
       font-size: 0.95rem;
       color: #718096;
       letter-spacing: 1px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       border-bottom: 1px solid #e2dcd0;
-      padding-bottom: 12px;
+      padding-bottom: 10px;
     }
-    /* ② 日にちの表示をもっと大きく改善 */
+    
+    /* ① 日にちの表示をはっきりと大きく改善 */
     .date-info {
-      font-size: 1.35rem;
-      color: #2d3748;
-      margin-top: 10px;
-      font-weight: 700;
+      font-size: 1.5rem !important;
+      color: #1a202c !important;
+      margin: 8px 0 4px 0;
+      font-weight: 800 !important;
     }
+
     /* 時間の表示（大きく・赤色・太字） */
     .session-time-log {
       font-size: 1.3rem;
       color: #e53e3e;
       font-weight: 900;
-      margin-top: 8px;
+      margin-top: 4px;
       min-height: 1.5em;
       letter-spacing: 0.5px;
     }
@@ -97,7 +99,7 @@
     .course-selector {
       display: flex;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
     .btn-course {
       flex: 1;
@@ -115,20 +117,22 @@
       border-color: #dd6b20;
     }
 
-    /* ③ 一時停止とリセットボタンを小さくスリムに改善 */
+    /* ② スタート・リセットボタンを小さくスリムに改善 */
     .control-btns {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 20px;
       justify-content: center;
     }
     .btn-action {
-      padding: 8px 20px;
+      padding: 8px 24px !important;
       border: none;
       border-radius: 10px;
       font-weight: bold;
-      font-size: 0.9rem;
+      font-size: 0.9rem !important;
       cursor: pointer;
+      flex: 0 1 auto !important;
+      min-width: 110px;
     }
     .btn-start { background: #d69e2e; color: #fff; }
     .btn-reset { background: #e53e3e; color: #fff; }
