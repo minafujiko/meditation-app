@@ -36,7 +36,7 @@
       padding-bottom: 10px;
     }
     
-    /* 日にちの表示を大きく */
+    /* 大きな日付表示 */
     .date-info {
       font-size: 1.5rem !important;
       color: #1a202c !important;
@@ -46,7 +46,7 @@
 
     /* 時間のログ表示（赤色・太字） */
     .session-time-log {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       color: #e53e3e;
       font-weight: 900;
       margin-top: 4px;
@@ -121,7 +121,7 @@
       border-color: #dd6b20;
     }
 
-    /* スタート・リセットボタンを小さくスリムに */
+    /* 小さくスリムな操作ボタン */
     .control-btns {
       display: flex;
       gap: 12px;
@@ -215,7 +215,8 @@
 <script>
   let audioCtx = null;
 
-  function getAudioContext() {
+  // iOS Safari対応の堅牢なオーディオエンジン初期化
+  function initAudioEngine() {
     if (!audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContextClass();
@@ -223,36 +224,53 @@
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
-    return audioCtx;
   }
 
+  // ゴング音（倍音成分を含む綺麗なシンギングボウル音）
   function playGongSound() {
+    initAudioEngine();
+    if (!audioCtx) return;
+
     try {
-      const ctx = getAudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(146.83, ctx.currentTime);
-      
-      gain.gain.setValueAtTime(0.0, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 5.0);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start();
-      osc.stop(ctx.currentTime + 5.0);
+      const now = audioCtx.currentTime;
+
+      // 主音
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(146.83, now); // D3
+      gain1.gain.setValueAtTime(0.0, now);
+      gain1.gain.linearRampToValueAtTime(0.8, now + 0.05);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 5.0);
+
+      // 倍音（より深みのある響き）
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(293.66, now); // D4
+      gain2.gain.setValueAtTime(0.0, now);
+      gain2.gain.linearRampToValueAtTime(0.3, now + 0.03);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 4.0);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now);
+      osc2.stop(now + 4.0);
+
     } catch(e) {
-      console.log('Audio error:', e);
+      console.log('Audio Error:', e);
     }
   }
 
+  // ステップ切り替え用（1回）
   function playSingleGong() {
     playGongSound();
   }
 
+  // 終了時フィナーレ用（3回連続）
   function playTripleGong() {
     playGongSound();
     setTimeout(() => playGongSound(), 1500);
@@ -304,7 +322,7 @@
     const dateStr = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
     document.getElementById('currentDate').innerText = `${dateStr} ${timeOfDay}`;
     
-    // 日付ごとの合算を管理（日が変わっていればリセット）
+    // 日付管理と合計時間の保持
     todayDateKey = now.toDateString();
     const savedDate = localStorage.getItem('meditation_date');
     const savedTotal = localStorage.getItem('meditation_total');
@@ -383,7 +401,8 @@
   }
 
   function toggleTimer() {
-    getAudioContext();
+    // ボタンタップ時にブラウザの音制限を解除
+    initAudioEngine();
 
     if (isRunning) {
       clearInterval(timerId);
@@ -412,8 +431,9 @@
     } else {
       const steps = courses[currentCourseMinutes];
       
+      // まだ次のステップがある場合（各ステップの間）
       if (currentStepIdx < steps.length - 1) {
-        playSingleGong(); // 切り替えゴング（1回）
+        playSingleGong(); // 切り替えの1回ゴング
         
         currentStepIdx++;
         stepSecondsLeft = steps[currentStepIdx].duration;
@@ -421,8 +441,8 @@
         updateDisplay();
         renderStepsList();
       } else {
-        // 完了時
-        playTripleGong(); // 完了ゴング（3回）
+        // 最後のステップ「軟酥」が終わったとき
+        playTripleGong(); // フィナーレの3回ゴング
 
         clearInterval(timerId);
         isRunning = false;
@@ -431,11 +451,12 @@
         const endTimeStr = getFormattedTime();
         document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
         
-        // 本日の合計時間を加算して保存
+        // 本日の合計時間を更新
         todayTotalMinutes += currentCourseMinutes;
         localStorage.setItem('meditation_total', todayTotalMinutes);
         updateTodaySumDisplay();
         
+        // タイマー位置に「〇〇分完了」を大きく表示
         const timeElem = document.getElementById('timeDisplay');
         timeElem.innerText = `${currentCourseMinutes}分完了`;
         timeElem.classList.add('completed-display');
@@ -457,8 +478,9 @@
     loadStep(0);
   }
 
-  document.addEventListener('touchstart', () => getAudioContext(), { passive: true });
-  document.addEventListener('click', () => getAudioContext(), { passive: true });
+  // スマホ画面のあらゆるタップ操作で音声をアンロック
+  document.addEventListener('touchstart', initAudioEngine, { passive: true });
+  document.addEventListener('click', initAudioEngine, { passive: true });
 
   window.onload = init;
 </script>
