@@ -91,13 +91,14 @@
       margin-bottom: 6px;
     }
     
-    /* 本日の合計表示 */
+    /* ① 本日の合計表示をさらに大きく目立たせる */
     .today-sum {
-      font-size: 0.95rem;
+      font-size: 1.25rem;
       color: #9c4221;
-      font-weight: bold;
+      font-weight: 900;
       margin-bottom: 20px;
       min-height: 1.4em;
+      letter-spacing: 0.5px;
     }
 
     .course-selector {
@@ -215,7 +216,6 @@
 <script>
   let audioCtx = null;
 
-  // iOS Safari対応の堅牢なオーディオエンジン初期化
   function initAudioEngine() {
     if (!audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -226,7 +226,7 @@
     }
   }
 
-  // ゴング音（倍音成分を含む綺麗なシンギングボウル音）
+  // ②③ ゴングの音をより大きく、深く響く仕様に強化
   function playGongSound() {
     initAudioEngine();
     if (!audioCtx) return;
@@ -234,31 +234,31 @@
     try {
       const now = audioCtx.currentTime;
 
-      // 主音
+      // 主音（豊かで太い響き）
       const osc1 = audioCtx.createOscillator();
       const gain1 = audioCtx.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(146.83, now); // D3
       gain1.gain.setValueAtTime(0.0, now);
-      gain1.gain.linearRampToValueAtTime(0.8, now + 0.05);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
+      gain1.gain.linearRampToValueAtTime(1.2, now + 0.04); // 音量をしっかり大きく
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 6.0); // 余韻を長く
       osc1.connect(gain1);
       gain1.connect(audioCtx.destination);
       osc1.start(now);
-      osc1.stop(now + 5.0);
+      osc1.stop(now + 6.0);
 
-      // 倍音（より深みのある響き）
+      // 美しい倍音（重厚感と広がり）
       const osc2 = audioCtx.createOscillator();
       const gain2 = audioCtx.createGain();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(293.66, now); // D4
       gain2.gain.setValueAtTime(0.0, now);
-      gain2.gain.linearRampToValueAtTime(0.3, now + 0.03);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 4.0);
+      gain2.gain.linearRampToValueAtTime(0.5, now + 0.03);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
       osc2.connect(gain2);
       gain2.connect(audioCtx.destination);
       osc2.start(now);
-      osc2.stop(now + 4.0);
+      osc2.stop(now + 5.0);
 
     } catch(e) {
       console.log('Audio Error:', e);
@@ -273,8 +273,8 @@
   // 終了時フィナーレ用（3回連続）
   function playTripleGong() {
     playGongSound();
-    setTimeout(() => playGongSound(), 1500);
-    setTimeout(() => playGongSound(), 3000);
+    setTimeout(() => playGongSound(), 1600);
+    setTimeout(() => playGongSound(), 3200);
   }
 
   const courses = {
@@ -303,6 +303,9 @@
   let isFinished = false;
   let todayTotalMinutes = 0;
   let todayDateKey = '';
+  
+  // ④ 画面が閉じられても正確に時間を測るための時刻管理
+  let targetEndTime = null;
 
   function init() {
     const now = new Date();
@@ -322,7 +325,6 @@
     const dateStr = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
     document.getElementById('currentDate').innerText = `${dateStr} ${timeOfDay}`;
     
-    // 日付管理と合計時間の保持
     todayDateKey = now.toDateString();
     const savedDate = localStorage.getItem('meditation_date');
     const savedTotal = localStorage.getItem('meditation_total');
@@ -401,12 +403,12 @@
   }
 
   function toggleTimer() {
-    // ボタンタップ時にブラウザの音制限を解除
     initAudioEngine();
 
     if (isRunning) {
       clearInterval(timerId);
       isRunning = false;
+      targetEndTime = null;
       document.getElementById('startBtn').innerText = 'スタート';
     } else {
       if (isFinished) {
@@ -419,24 +421,30 @@
       }
       
       isRunning = true;
+      targetEndTime = Date.now() + (stepSecondsLeft * 1000);
       document.getElementById('startBtn').innerText = '一時停止';
-      timerId = setInterval(tick, 1000);
+      timerId = setInterval(tick, 200); // ④ 画面復帰時にも高精度で同期
     }
   }
 
   function tick() {
-    if (stepSecondsLeft > 0) {
-      stepSecondsLeft--;
-      updateDisplay();
-    } else {
+    if (!isRunning) return;
+
+    const now = Date.now();
+    const remainingMs = targetEndTime - now;
+    stepSecondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+    
+    updateDisplay();
+
+    if (stepSecondsLeft <= 0) {
       const steps = courses[currentCourseMinutes];
       
-      // まだ次のステップがある場合（各ステップの間）
       if (currentStepIdx < steps.length - 1) {
         playSingleGong(); // 切り替えの1回ゴング
         
         currentStepIdx++;
         stepSecondsLeft = steps[currentStepIdx].duration;
+        targetEndTime = Date.now() + (stepSecondsLeft * 1000);
         document.getElementById('stepName').innerText = steps[currentStepIdx].name;
         updateDisplay();
         renderStepsList();
@@ -446,17 +454,16 @@
 
         clearInterval(timerId);
         isRunning = false;
+        targetEndTime = null;
         isFinished = true;
         
         const endTimeStr = getFormattedTime();
         document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
         
-        // 本日の合計時間を更新
         todayTotalMinutes += currentCourseMinutes;
         localStorage.setItem('meditation_total', todayTotalMinutes);
         updateTodaySumDisplay();
         
-        // タイマー位置に「〇〇分完了」を大きく表示
         const timeElem = document.getElementById('timeDisplay');
         timeElem.innerText = `${currentCourseMinutes}分完了`;
         timeElem.classList.add('completed-display');
@@ -471,6 +478,7 @@
   function resetTimer() {
     clearInterval(timerId);
     isRunning = false;
+    targetEndTime = null;
     isFinished = false;
     startTimeStr = '';
     document.getElementById('timeLog').innerText = '';
@@ -478,7 +486,20 @@
     loadStep(0);
   }
 
-  // スマホ画面のあらゆるタップ操作で音声をアンロック
+  // ④ スマホ画面が閉じられてから戻ってきたときに正確な時間を再計算する処理
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isRunning && targetEndTime) {
+      const now = Date.now();
+      const remainingMs = targetEndTime - now;
+      if (remainingMs <= 0) {
+        tick();
+      } else {
+        stepSecondsLeft = Math.ceil(remainingMs / 1000);
+        updateDisplay();
+      }
+    }
+  });
+
   document.addEventListener('touchstart', initAudioEngine, { passive: true });
   document.addEventListener('click', initAudioEngine, { passive: true });
 
