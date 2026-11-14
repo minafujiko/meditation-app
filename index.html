@@ -36,7 +36,6 @@
       padding-bottom: 10px;
     }
     
-    /* 大きな日付表示 */
     .date-info {
       font-size: 1.5rem !important;
       color: #1a202c !important;
@@ -44,7 +43,6 @@
       font-weight: 800 !important;
     }
 
-    /* 時間のログ表示（赤色・太字） */
     .session-time-log {
       font-size: 1.3rem;
       color: #e53e3e;
@@ -91,7 +89,6 @@
       margin-bottom: 6px;
     }
     
-    /* 本日の合計表示（大きく目立たせる） */
     .today-sum {
       font-size: 1.25rem;
       color: #9c4221;
@@ -122,7 +119,6 @@
       border-color: #dd6b20;
     }
 
-    /* 小さくスリムな操作ボタン */
     .control-btns {
       display: flex;
       gap: 12px;
@@ -214,305 +210,56 @@
 </div>
 
 <script>
-  let audioCtx = null;
+  // iPhoneのSafariや画面消灯時でも確実に大音量で響くWAVゴング音源を生成
+  let gongWavUrl = null;
+  let audioUnlocked = false;
 
-  // 毎回確実にオーディオコンテキストを起こして鳴らせるようにする
-  function getAudioContext() {
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!audioCtx) {
-        audioCtx = new AudioContextClass();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    } catch(e) {
-      console.log('Audio init error:', e);
-    }
-    return audioCtx;
-  }
+  function createGongWavUrl() {
+    if (gongWavUrl) return gongWavUrl;
+    const sampleRate = 22050;
+    const duration = 4.5; // 4.5秒の深い余韻
+    const numSamples = Math.floor(sampleRate * duration);
+    const buffer = new ArrayBuffer(44 + numSamples * 2);
+    const view = new DataView(buffer);
 
-  // ゴング音（大きく、深く響くシンギングボウル音）
-  function playGongSound() {
-    const ctx = getAudioContext();
-    if (!ctx) return;
-
-    try {
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-
-      const now = ctx.currentTime;
-
-      // 主音（豊かで太い響き）
-      const osc1 = ctx.createOscillator();
-      const gain1 = ctx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(146.83, now); // D3
-      gain1.gain.setValueAtTime(0.0, now);
-      gain1.gain.linearRampToValueAtTime(1.3, now + 0.04);
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 6.0);
-      osc1.connect(gain1);
-      gain1.connect(ctx.destination);
-      osc1.start(now);
-      osc1.stop(now + 6.0);
-
-      // 美しい倍音（重厚感と広がり）
-      const osc2 = ctx.createOscillator();
-      const gain2 = ctx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(293.66, now); // D4
-      gain2.gain.setValueAtTime(0.0, now);
-      gain2.gain.linearRampToValueAtTime(0.5, now + 0.03);
-      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
-      osc2.connect(gain2);
-      gain2.connect(ctx.destination);
-      osc2.start(now);
-      osc2.stop(now + 5.0);
-
-    } catch(e) {
-      console.log('Audio Play Error:', e);
-    }
-  }
-
-  // ステップ切り替え用（1回）
-  function playSingleGong() {
-    playGongSound();
-  }
-
-  // 終了時フィナーレ用（3回連続）
-  function playTripleGong() {
-    playGongSound();
-    setTimeout(() => playGongSound(), 1600);
-    setTimeout(() => playGongSound(), 3200);
-  }
-
-  const courses = {
-    9: [
-      { name: "第6チャクラ", duration: 60,  minText: "1分" },
-      { name: "第7チャクラ", duration: 60,  minText: "1分" },
-      { name: "第1チャクラ", duration: 180, minText: "3分" },
-      { name: "ステージ",     duration: 180, minText: "3分" },
-      { name: "軟酥",         duration: 60,  minText: "1分" }
-    ],
-    21: [
-      { name: "第6チャクラ", duration: 180, minText: "3分" },
-      { name: "第7チャクラ", duration: 180, minText: "3分" },
-      { name: "第1チャクラ", duration: 360, minText: "6分" },
-      { name: "ステージ",     duration: 360, minText: "6分" },
-      { name: "軟酥",         duration: 180, minText: "3分" }
-    ]
-  };
-
-  let currentCourseMinutes = 9;
-  let currentStepIdx = 0;
-  let stepSecondsLeft = 0;
-  let timerId = null;
-  let isRunning = false;
-  let startTimeStr = '';
-  let isFinished = false;
-  let todayTotalMinutes = 0;
-  let todayDateKey = '';
-  let targetEndTime = null;
-
-  function init() {
-    const now = new Date();
-    const hour = now.getHours();
-    
-    let timeOfDay = '昼';
-    if (hour >= 4 && hour < 11) {
-      timeOfDay = '朝';
-    } else if (hour >= 11 && hour < 16) {
-      timeOfDay = '昼';
-    } else if (hour >= 16 && hour < 19) {
-      timeOfDay = '夕';
-    } else {
-      timeOfDay = '夜';
-    }
-
-    const dateStr = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
-    document.getElementById('currentDate').innerText = `${dateStr} ${timeOfDay}`;
-    
-    todayDateKey = now.toDateString();
-    const savedDate = localStorage.getItem('meditation_date');
-    const savedTotal = localStorage.getItem('meditation_total');
-    
-    if (savedDate === todayDateKey && savedTotal) {
-      todayTotalMinutes = parseInt(savedTotal, 10);
-    } else {
-      todayTotalMinutes = 0;
-      localStorage.setItem('meditation_date', todayDateKey);
-      localStorage.setItem('meditation_total', 0);
-    }
-    
-    updateTodaySumDisplay();
-    selectCourse(9);
-  }
-
-  function updateTodaySumDisplay() {
-    document.getElementById('todaySumDisplay').innerText = `本日の合計：${todayTotalMinutes}分`;
-  }
-
-  function getFormattedTime() {
-    const now = new Date();
-    const h = now.getHours().toString().padStart(2, '0');
-    const m = now.getMinutes().toString().padStart(2, '0');
-    return `${h}:${m}`;
-  }
-
-  function selectCourse(mins) {
-    if (isRunning) resetTimer();
-    currentCourseMinutes = mins;
-    document.querySelectorAll('.btn-course').forEach(btn => {
-      btn.classList.toggle('active', btn.innerText.includes(mins + '分'));
-    });
-    currentStepIdx = 0;
-    isFinished = false;
-    loadStep(0);
-    renderStepsList();
-  }
-
-  function renderStepsList() {
-    const container = document.getElementById('stepsListContainer');
-    const steps = courses[currentCourseMinutes];
-    container.innerHTML = '';
-    
-    steps.forEach((step, idx) => {
-      const row = document.createElement('div');
-      row.className = 'step-item' + (idx === currentStepIdx && !isFinished ? ' active-row' : '');
-      row.innerHTML = `
-        <div class="step-left">
-          <div class="step-badge">${idx + 1}</div>
-          <span>${step.name}</span>
-        </div>
-        <span class="step-time-text">${step.minText}</span>
-      `;
-      container.appendChild(row);
-    });
-  }
-
-  function loadStep(idx) {
-    const steps = courses[currentCourseMinutes];
-    if (idx >= steps.length) return;
-    currentStepIdx = idx;
-    stepSecondsLeft = steps[idx].duration;
-    document.getElementById('stepName').innerText = steps[idx].name;
-    const timeElem = document.getElementById('timeDisplay');
-    timeElem.classList.remove('completed-display');
-    updateDisplay();
-    renderStepsList();
-  }
-
-  function updateDisplay() {
-    if (isFinished) return;
-    const m = Math.floor(stepSecondsLeft / 60).toString().padStart(2, '0');
-    const s = (stepSecondsLeft % 60).toString().padStart(2, '0');
-    document.getElementById('timeDisplay').innerText = `${m}:${s}`;
-  }
-
-  function toggleTimer() {
-    getAudioContext();
-
-    if (isRunning) {
-      clearInterval(timerId);
-      isRunning = false;
-      targetEndTime = null;
-      document.getElementById('startBtn').innerText = 'スタート';
-    } else {
-      if (isFinished) {
-        resetTimer();
-      }
-
-      if (!startTimeStr) {
-        startTimeStr = getFormattedTime();
-        document.getElementById('timeLog').innerText = `開始：${startTimeStr}`;
-      }
-      
-      isRunning = true;
-      targetEndTime = Date.now() + (stepSecondsLeft * 1000);
-      document.getElementById('startBtn').innerText = '一時停止';
-      timerId = setInterval(tick, 200);
-    }
-  }
-
-  function tick() {
-    if (!isRunning) return;
-
-    const now = Date.now();
-    const remainingMs = targetEndTime - now;
-    stepSecondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
-    
-    updateDisplay();
-
-    if (stepSecondsLeft <= 0) {
-      const steps = courses[currentCourseMinutes];
-      
-      if (currentStepIdx < steps.length - 1) {
-        playSingleGong(); // 切り替えの1回ゴング
-        
-        currentStepIdx++;
-        stepSecondsLeft = steps[currentStepIdx].duration;
-        targetEndTime = Date.now() + (stepSecondsLeft * 1000);
-        document.getElementById('stepName').innerText = steps[currentStepIdx].name;
-        updateDisplay();
-        renderStepsList();
-      } else {
-        // 最後のステップ「軟酥」が終わったとき
-        playTripleGong(); // フィナーレの3回ゴング
-
-        clearInterval(timerId);
-        isRunning = false;
-        targetEndTime = null;
-        isFinished = true;
-        
-        const endTimeStr = getFormattedTime();
-        document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
-        
-        todayTotalMinutes += currentCourseMinutes;
-        localStorage.setItem('meditation_total', todayTotalMinutes);
-        updateTodaySumDisplay();
-        
-        const timeElem = document.getElementById('timeDisplay');
-        timeElem.innerText = `${currentCourseMinutes}分完了`;
-        timeElem.classList.add('completed-display');
-        
-        document.getElementById('stepName').innerText = '完了コース';
-        document.getElementById('startBtn').innerText = 'スタート';
-        renderStepsList();
+    function writeString(offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
       }
     }
-  }
 
-  function resetTimer() {
-    clearInterval(timerId);
-    isRunning = false;
-    targetEndTime = null;
-    isFinished = false;
-    startTimeStr = '';
-    document.getElementById('timeLog').innerText = '';
-    document.getElementById('startBtn').innerText = 'スタート';
-    loadStep(0);
-  }
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + numSamples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, numSamples * 2, true);
 
-  // 画面が閉じられてから復帰したときの処理
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && isRunning && targetEndTime) {
-      getAudioContext(); // 復帰時にオーディオを再有効化
-      const now = Date.now();
-      const remainingMs = targetEndTime - now;
-      if (remainingMs <= 0) {
-        tick();
-      } else {
-        stepSecondsLeft = Math.ceil(remainingMs / 1000);
-        updateDisplay();
-      }
+    // シンギングボウル・ゴングの豊かな倍音波形を合成
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+      const attack = Math.min(1.0, t / 0.03);
+      const env1 = Math.exp(-t * 0.9);
+      const env2 = Math.exp(-t * 1.4);
+      const env3 = Math.exp(-t * 2.2);
+
+      // 基音(146.83Hz: D3) + 2倍音 + 3倍音 + 金属的な響き
+      const w1 = Math.sin(2 * Math.PI * 146.83 * t) * 0.65 * env1;
+      const w2 = Math.sin(2 * Math.PI * 293.66 * t) * 0.30 * env2;
+      const w3 = Math.sin(2 * Math.PI * 440.00 * t) * 0.15 * env3;
+      const w4 = Math.sin(2 * Math.PI * 148.50 * t) * 0.25 * env1; // うなり成分
+
+      let sample = (w1 + w2 + w3 + w4) * attack;
+      sample = Math.max(-1, Math.min(1, sample));
+      view.setInt16(44 + i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
     }
-  });
 
-  document.addEventListener('touchstart', () => getAudioContext(), { passive: true });
-  document.addEventListener('click', () => getAudioContext(), { passive: true });
-
-  window.onload = init;
-</script>
-</body>
-</html>
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    gongWavUrl =
