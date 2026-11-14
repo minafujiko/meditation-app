@@ -21,7 +21,7 @@
       width: 100%;
       max-width: 420px;
       border-radius: 28px;
-      padding: 30px 24px;
+      padding: 28px 20px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.6);
       text-align: center;
       border: 1px solid rgba(214, 158, 46, 0.3);
@@ -33,79 +33,86 @@
       letter-spacing: 1px;
       margin-bottom: 4px;
       border-bottom: 1px solid #e2dcd0;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
     
+    /* 日付表示を大きく */
     .date-info {
       font-size: 1.5rem !important;
       color: #1a202c !important;
-      margin: 8px 0 4px 0;
+      margin: 6px 0 2px 0;
       font-weight: 800 !important;
     }
 
+    /* 時間のログ表示（赤色・太字） */
     .session-time-log {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       color: #e53e3e;
       font-weight: 900;
-      margin-top: 4px;
-      min-height: 1.5em;
+      margin-bottom: 6px;
+      min-height: 1.4em;
       letter-spacing: 0.5px;
     }
 
     .timer-container {
       position: relative;
-      display: inline-block;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       width: 100%;
-      margin: 10px 0 20px 0;
+      margin: 4px 0 10px 0;
     }
 
+    /* 不二子イラストをタイマーの横に綺麗に配置 */
     .fujiko-img {
       position: absolute;
-      top: 35px;
-      right: -15px;
-      width: 70px;
+      right: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 65px;
       height: auto;
       z-index: 10;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+      mix-blend-mode: multiply;
+      filter: drop-shadow(0 3px 5px rgba(0,0,0,0.15));
     }
 
     .total-time {
-      font-size: 3.2rem;
+      font-size: 3.0rem;
       font-weight: bold;
       color: #1a202c;
       margin: 0;
       letter-spacing: -1px;
     }
     .completed-display {
-      font-size: 2.6rem;
+      font-size: 2.3rem;
       font-weight: 900;
       color: #dd6b20;
     }
 
     .course-title-sub {
-      font-size: 1.05rem;
+      font-size: 1.0rem;
       color: #2d3748;
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     
+    /* 本日の合計（大きく目立たせる） */
     .today-sum {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       color: #9c4221;
       font-weight: 900;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       min-height: 1.4em;
-      letter-spacing: 0.5px;
     }
 
     .course-selector {
       display: flex;
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .btn-course {
       flex: 1;
-      padding: 10px;
+      padding: 9px;
       border: 2px solid #d4c5b9;
       border-radius: 12px;
       background: #fff;
@@ -119,10 +126,11 @@
       border-color: #dd6b20;
     }
 
+    /* スタート・リセットボタン（スリムに） */
     .control-btns {
       display: flex;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       justify-content: center;
     }
     .btn-action {
@@ -141,15 +149,15 @@
     .steps-list {
       text-align: left;
       border-top: 1px solid #e2dcd0;
-      padding-top: 16px;
+      padding-top: 14px;
     }
     .step-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 8px;
+      padding: 10px 8px;
       border-bottom: 1px solid #eae5dc;
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: #2d3748;
     }
     .step-item.active-row {
@@ -166,18 +174,18 @@
     .step-badge {
       background: #dd6b20;
       color: #fff;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: bold;
     }
     .step-time-text {
       font-weight: bold;
-      font-size: 1.05rem;
+      font-size: 1.0rem;
     }
   </style>
 </head>
@@ -210,14 +218,13 @@
 </div>
 
 <script>
-  // iPhoneのSafariや画面消灯時でも確実に大音量で響くWAVゴング音源を生成
   let gongWavUrl = null;
   let audioUnlocked = false;
 
   function createGongWavUrl() {
     if (gongWavUrl) return gongWavUrl;
     const sampleRate = 22050;
-    const duration = 4.5; // 4.5秒の深い余韻
+    const duration = 4.5;
     const numSamples = Math.floor(sampleRate * duration);
     const buffer = new ArrayBuffer(44 + numSamples * 2);
     const view = new DataView(buffer);
@@ -242,7 +249,6 @@
     writeString(36, 'data');
     view.setUint32(40, numSamples * 2, true);
 
-    // シンギングボウル・ゴングの豊かな倍音波形を合成
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
       const attack = Math.min(1.0, t / 0.03);
@@ -250,11 +256,10 @@
       const env2 = Math.exp(-t * 1.4);
       const env3 = Math.exp(-t * 2.2);
 
-      // 基音(146.83Hz: D3) + 2倍音 + 3倍音 + 金属的な響き
       const w1 = Math.sin(2 * Math.PI * 146.83 * t) * 0.65 * env1;
       const w2 = Math.sin(2 * Math.PI * 293.66 * t) * 0.30 * env2;
       const w3 = Math.sin(2 * Math.PI * 440.00 * t) * 0.15 * env3;
-      const w4 = Math.sin(2 * Math.PI * 148.50 * t) * 0.25 * env1; // うなり成分
+      const w4 = Math.sin(2 * Math.PI * 148.50 * t) * 0.25 * env1;
 
       let sample = (w1 + w2 + w3 + w4) * attack;
       sample = Math.max(-1, Math.min(1, sample));
@@ -262,4 +267,308 @@
     }
 
     const blob = new Blob([buffer], { type: 'audio/wav' });
-    gongWavUrl =
+    gongWavUrl = URL.createObjectURL(blob);
+    return gongWavUrl;
+  }
+
+  const gongPlayers = [];
+
+  function initAudioPlayers() {
+    const url = createGongWavUrl();
+    if (gongPlayers.length === 0) {
+      for (let i = 0; i < 3; i++) {
+        const audio = new Audio(url);
+        audio.preload = 'auto';
+        audio.volume = 1.0;
+        gongPlayers.push(audio);
+      }
+    }
+    if (!audioUnlocked) {
+      gongPlayers.forEach(p => {
+        p.muted = true;
+        p.play().then(() => {
+          p.pause();
+          p.currentTime = 0;
+          p.muted = false;
+        }).catch(() => {});
+      });
+      audioUnlocked = true;
+    }
+  }
+
+  function playGongIndex(index) {
+    initAudioPlayers();
+    const player = gongPlayers[index % gongPlayers.length];
+    if (player) {
+      player.muted = false;
+      player.volume = 1.0;
+      player.currentTime = 0;
+      player.play().catch(e => console.log('Audio play blocked:', e));
+    }
+  }
+
+  // ①〜④ 各ステップ終了時のゴング（1回）
+  function playSingleGong() {
+    playGongIndex(0);
+  }
+
+  // ⑤ 最後のステップ終了時のゴング（3回連続）
+  function playTripleGong() {
+    playGongIndex(0);
+    setTimeout(() => playGongIndex(1), 1600);
+    setTimeout(() => playGongIndex(2), 3200);
+  }
+
+  const courses = {
+    9: [
+      { name: "第6チャクラ", duration: 60,  minText: "1分" },
+      { name: "第7チャクラ", duration: 60,  minText: "1分" },
+      { name: "第1チャクラ", duration: 180, minText: "3分" },
+      { name: "ステージ",     duration: 180, minText: "3分" },
+      { name: "軟酥",         duration: 60,  minText: "1分" }
+    ],
+    21: [
+      { name: "第6チャクラ", duration: 180, minText: "3分" },
+      { name: "第7チャクラ", duration: 180, minText: "3分" },
+      { name: "第1チャクラ", duration: 360, minText: "6分" },
+      { name: "ステージ",     duration: 360, minText: "6分" },
+      { name: "軟酥",         duration: 180, minText: "3分" }
+    ]
+  };
+
+  let currentCourseMinutes = 9;
+  let currentStepIdx = 0;
+  let stepSecondsLeft = 0;
+  let timerId = null;
+  let isRunning = false;
+  let startTimeStr = '';
+  let isFinished = false;
+  let todayTotalMinutes = 0;
+  let targetEndTime = null;
+
+  function getTodayKey() {
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  }
+
+  function loadTodayTotal() {
+    const todayKey = getTodayKey();
+    const savedDate = localStorage.getItem('meditation_date');
+    const savedTotal = localStorage.getItem('meditation_total');
+    
+    if (savedDate === todayKey && savedTotal !== null && !isNaN(parseInt(savedTotal, 10))) {
+      todayTotalMinutes = parseInt(savedTotal, 10);
+    } else {
+      todayTotalMinutes = 0;
+      localStorage.setItem('meditation_date', todayKey);
+      localStorage.setItem('meditation_total', '0');
+    }
+    updateTodaySumDisplay();
+  }
+
+  function addTodayTotal(minutesToAdd) {
+    const todayKey = getTodayKey();
+    const savedDate = localStorage.getItem('meditation_date');
+    let currentTotal = 0;
+
+    if (savedDate === todayKey) {
+      const savedTotal = parseInt(localStorage.getItem('meditation_total') || '0', 10);
+      currentTotal = isNaN(savedTotal) ? 0 : savedTotal;
+    }
+
+    todayTotalMinutes = currentTotal + Number(minutesToAdd);
+    localStorage.setItem('meditation_date', todayKey);
+    localStorage.setItem('meditation_total', String(todayTotalMinutes));
+    updateTodaySumDisplay();
+  }
+
+  function updateTodaySumDisplay() {
+    const el = document.getElementById('todaySumDisplay');
+    if (el) {
+      el.innerText = `本日の合計：${todayTotalMinutes}分`;
+    }
+  }
+
+  function init() {
+    createGongWavUrl();
+    const now = new Date();
+    const hour = now.getHours();
+    
+    let timeOfDay = '昼';
+    if (hour >= 4 && hour < 11) {
+      timeOfDay = '朝';
+    } else if (hour >= 11 && hour < 16) {
+      timeOfDay = '昼';
+    } else if (hour >= 16 && hour < 19) {
+      timeOfDay = '夕';
+    } else {
+      timeOfDay = '夜';
+    }
+
+    const dateStr = now.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' });
+    document.getElementById('currentDate').innerText = `${dateStr} ${timeOfDay}`;
+    
+    loadTodayTotal();
+    selectCourse(9);
+  }
+
+  function getFormattedTime() {
+    const now = new Date();
+    const h = now.getHours().toString().padStart(2, '0');
+    const m = now.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  }
+
+  function selectCourse(mins) {
+    if (isRunning) resetTimer();
+    currentCourseMinutes = mins;
+    document.querySelectorAll('.btn-course').forEach(btn => {
+      btn.classList.toggle('active', btn.innerText.includes(mins + '分'));
+    });
+    currentStepIdx = 0;
+    isFinished = false;
+    loadStep(0);
+    renderStepsList();
+  }
+
+  function renderStepsList() {
+    const container = document.getElementById('stepsListContainer');
+    const steps = courses[currentCourseMinutes];
+    container.innerHTML = '';
+    
+    steps.forEach((step, idx) => {
+      const row = document.createElement('div');
+      row.className = 'step-item' + (idx === currentStepIdx && !isFinished ? ' active-row' : '');
+      row.innerHTML = `
+        <div class="step-left">
+          <div class="step-badge">${idx + 1}</div>
+          <span>${step.name}</span>
+        </div>
+        <span class="step-time-text">${step.minText}</span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function loadStep(idx) {
+    const steps = courses[currentCourseMinutes];
+    if (idx >= steps.length) return;
+    currentStepIdx = idx;
+    stepSecondsLeft = steps[idx].duration;
+    document.getElementById('stepName').innerText = steps[idx].name;
+    const timeElem = document.getElementById('timeDisplay');
+    timeElem.classList.remove('completed-display');
+    updateDisplay();
+    renderStepsList();
+  }
+
+  function updateDisplay() {
+    if (isFinished) return;
+    const m = Math.floor(stepSecondsLeft / 60).toString().padStart(2, '0');
+    const s = (stepSecondsLeft % 60).toString().padStart(2, '0');
+    document.getElementById('timeDisplay').innerText = `${m}:${s}`;
+  }
+
+  function toggleTimer() {
+    initAudioPlayers();
+
+    if (isRunning) {
+      clearInterval(timerId);
+      isRunning = false;
+      targetEndTime = null;
+      document.getElementById('startBtn').innerText = 'スタート';
+    } else {
+      if (isFinished) {
+        resetTimer();
+      }
+
+      if (!startTimeStr) {
+        startTimeStr = getFormattedTime();
+        document.getElementById('timeLog').innerText = `開始：${startTimeStr}`;
+      }
+      
+      isRunning = true;
+      targetEndTime = Date.now() + (stepSecondsLeft * 1000);
+      document.getElementById('startBtn').innerText = '一時停止';
+      timerId = setInterval(tick, 200);
+    }
+  }
+
+  function tick() {
+    if (!isRunning) return;
+
+    const now = Date.now();
+    const remainingMs = targetEndTime - now;
+    stepSecondsLeft = Math.max(0, Math.ceil(remainingMs / 1000));
+    
+    updateDisplay();
+
+    if (stepSecondsLeft <= 0) {
+      const steps = courses[currentCourseMinutes];
+      
+      // ①〜④ 各ステップ終了時（1回ゴング）
+      if (currentStepIdx < steps.length - 1) {
+        playSingleGong();
+        
+        currentStepIdx++;
+        stepSecondsLeft = steps[currentStepIdx].duration;
+        targetEndTime = Date.now() + (stepSecondsLeft * 1000);
+        document.getElementById('stepName').innerText = steps[currentStepIdx].name;
+        updateDisplay();
+        renderStepsList();
+      } else {
+        // ⑤ 最後のステップ（軟酥）終了時（3回連続ゴング ＆ 合計加算）
+        clearInterval(timerId);
+        isRunning = false;
+        targetEndTime = null;
+        isFinished = true;
+
+        playTripleGong();
+        
+        const endTimeStr = getFormattedTime();
+        document.getElementById('timeLog').innerText = `開始：${startTimeStr} 〜 終了：${endTimeStr}`;
+        
+        addTodayTotal(currentCourseMinutes);
+        
+        const timeElem = document.getElementById('timeDisplay');
+        timeElem.innerText = `${currentCourseMinutes}分完了`;
+        timeElem.classList.add('completed-display');
+        
+        document.getElementById('stepName').innerText = '完了コース';
+        document.getElementById('startBtn').innerText = 'スタート';
+        renderStepsList();
+      }
+    }
+  }
+
+  function resetTimer() {
+    clearInterval(timerId);
+    isRunning = false;
+    targetEndTime = null;
+    isFinished = false;
+    startTimeStr = '';
+    document.getElementById('timeLog').innerText = '';
+    document.getElementById('startBtn').innerText = 'スタート';
+    loadStep(0);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isRunning && targetEndTime) {
+      const now = Date.now();
+      const remainingMs = targetEndTime - now;
+      if (remainingMs <= 0) {
+        tick();
+      } else {
+        stepSecondsLeft = Math.ceil(remainingMs / 1000);
+        updateDisplay();
+      }
+    }
+  });
+
+  document.addEventListener('touchstart', initAudioPlayers, { passive: true });
+  document.addEventListener('click', initAudioPlayers, { passive: true });
+
+  window.onload = init;
+</script>
+</body>
+</html>
