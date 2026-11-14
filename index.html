@@ -91,7 +91,7 @@
       margin-bottom: 6px;
     }
     
-    /* ① 本日の合計表示をさらに大きく目立たせる */
+    /* 本日の合計表示（大きく目立たせる） */
     .today-sum {
       font-size: 1.25rem;
       color: #9c4221;
@@ -216,52 +216,62 @@
 <script>
   let audioCtx = null;
 
-  function initAudioEngine() {
-    if (!audioCtx) {
+  // 毎回確実にオーディオコンテキストを起こして鳴らせるようにする
+  function getAudioContext() {
+    try {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioContextClass();
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    } catch(e) {
+      console.log('Audio init error:', e);
     }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
+    return audioCtx;
   }
 
-  // ②③ ゴングの音をより大きく、深く響く仕様に強化
+  // ゴング音（大きく、深く響くシンギングボウル音）
   function playGongSound() {
-    initAudioEngine();
-    if (!audioCtx) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
     try {
-      const now = audioCtx.currentTime;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const now = ctx.currentTime;
 
       // 主音（豊かで太い響き）
-      const osc1 = audioCtx.createOscillator();
-      const gain1 = audioCtx.createGain();
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(146.83, now); // D3
       gain1.gain.setValueAtTime(0.0, now);
-      gain1.gain.linearRampToValueAtTime(1.2, now + 0.04); // 音量をしっかり大きく
-      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 6.0); // 余韻を長く
+      gain1.gain.linearRampToValueAtTime(1.3, now + 0.04);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 6.0);
       osc1.connect(gain1);
-      gain1.connect(audioCtx.destination);
+      gain1.connect(ctx.destination);
       osc1.start(now);
       osc1.stop(now + 6.0);
 
       // 美しい倍音（重厚感と広がり）
-      const osc2 = audioCtx.createOscillator();
-      const gain2 = audioCtx.createGain();
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(293.66, now); // D4
       gain2.gain.setValueAtTime(0.0, now);
       gain2.gain.linearRampToValueAtTime(0.5, now + 0.03);
       gain2.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
       osc2.connect(gain2);
-      gain2.connect(audioCtx.destination);
+      gain2.connect(ctx.destination);
       osc2.start(now);
       osc2.stop(now + 5.0);
 
     } catch(e) {
-      console.log('Audio Error:', e);
+      console.log('Audio Play Error:', e);
     }
   }
 
@@ -303,8 +313,6 @@
   let isFinished = false;
   let todayTotalMinutes = 0;
   let todayDateKey = '';
-  
-  // ④ 画面が閉じられても正確に時間を測るための時刻管理
   let targetEndTime = null;
 
   function init() {
@@ -403,7 +411,7 @@
   }
 
   function toggleTimer() {
-    initAudioEngine();
+    getAudioContext();
 
     if (isRunning) {
       clearInterval(timerId);
@@ -423,7 +431,7 @@
       isRunning = true;
       targetEndTime = Date.now() + (stepSecondsLeft * 1000);
       document.getElementById('startBtn').innerText = '一時停止';
-      timerId = setInterval(tick, 200); // ④ 画面復帰時にも高精度で同期
+      timerId = setInterval(tick, 200);
     }
   }
 
@@ -486,9 +494,10 @@
     loadStep(0);
   }
 
-  // ④ スマホ画面が閉じられてから戻ってきたときに正確な時間を再計算する処理
+  // 画面が閉じられてから復帰したときの処理
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && isRunning && targetEndTime) {
+      getAudioContext(); // 復帰時にオーディオを再有効化
       const now = Date.now();
       const remainingMs = targetEndTime - now;
       if (remainingMs <= 0) {
@@ -500,8 +509,8 @@
     }
   });
 
-  document.addEventListener('touchstart', initAudioEngine, { passive: true });
-  document.addEventListener('click', initAudioEngine, { passive: true });
+  document.addEventListener('touchstart', () => getAudioContext(), { passive: true });
+  document.addEventListener('click', () => getAudioContext(), { passive: true });
 
   window.onload = init;
 </script>
